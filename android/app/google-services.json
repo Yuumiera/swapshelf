@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "806131222747",
+    "project_id": "swapshelf-bdbf6",
+    "storage_bucket": "swapshelf-bdbf6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:806131222747:android:d5938cfc6ba2d84553e4fe",
+        "android_client_info": {
+          "package_name": "com.example.swapshelf"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAZqVw-Lqi2ZmgeOwbfaolMciWD4sHEfgM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:806131222747:android:3b6cef4e84e9bb3553e4fe",
+        "android_client_info": {
+          "package_name": "com.example.swapshelfproje"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAZqVw-Lqi2ZmgeOwbfaolMciWD4sHEfgM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:806131222747:android:2c65294a2b814f7c53e4fe",
+        "android_client_info": {
+          "package_name": "com.yyy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAZqVw-Lqi2ZmgeOwbfaolMciWD4sHEfgM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
