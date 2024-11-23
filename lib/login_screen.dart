@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import 'register_screen.dart'; // RegisterScreen'in olduğu dosyanın yolu
-import 'home_screen.dart'; // HomeScreen'i dahil ediyoruz
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'home_screen.dart'; // Your HomeScreen widget
+import 'register_screen.dart'; // Ensure you have this import to resolve RegisterScreen
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -14,11 +16,39 @@ class _LoginScreenState extends State<LoginScreen> {
   FocusNode _emailFocusNode = FocusNode();
   FocusNode _passwordFocusNode = FocusNode();
 
+  // Firebase Authentication ve Google Sign-In instance'ları
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
+
   @override
   void dispose() {
     _emailFocusNode.dispose();
     _passwordFocusNode.dispose();
     super.dispose();
+  }
+
+  // Google ile giriş fonksiyonu
+  Future<User?> _signInWithGoogle() async {
+    try {
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        return null; // Kullanıcı giriş yapmadı
+      }
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+      final OAuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      UserCredential userCredential =
+          await _auth.signInWithCredential(credential);
+      return userCredential.user; // Kullanıcıyı döndürüyoruz
+    } catch (error) {
+      print("Google Sign-In Error: $error");
+      return null;
+    }
   }
 
   @override
@@ -31,11 +61,9 @@ class _LoginScreenState extends State<LoginScreen> {
     double googleButtonWidth = buttonWidth;
 
     return Scaffold(
-      resizeToAvoidBottomInset:
-          true, // Klavye açıldığında ekranın yeniden boyutlanmasını sağlar
+      resizeToAvoidBottomInset: true,
       body: GestureDetector(
         onTap: () {
-          // Kullanıcı ekranda bir yere tıklarsa klavyeyi kapat
           FocusScope.of(context).unfocus();
         },
         child: Container(
@@ -49,8 +77,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
           child: SingleChildScrollView(
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior
-                .onDrag, // Klavye kaydırıldığında kapanması sağlanır
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             child: Padding(
               padding:
                   const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
@@ -78,7 +105,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   SizedBox(height: screenHeight * 0.04),
                   // Email Giriş Alanı
                   TextField(
-                    focusNode: _emailFocusNode, // FocusNode ekleniyor
+                    focusNode: _emailFocusNode,
                     decoration: InputDecoration(
                       labelText: 'Email',
                       labelStyle: TextStyle(color: Colors.white),
@@ -93,14 +120,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     onTap: () {
-                      // Email alanına tıklanınca klavye açılır
                       FocusScope.of(context).requestFocus(_emailFocusNode);
                     },
                   ),
                   SizedBox(height: screenHeight * 0.015),
                   // Şifre Giriş Alanı
                   TextField(
-                    focusNode: _passwordFocusNode, // FocusNode ekleniyor
+                    focusNode: _passwordFocusNode,
                     obscureText: _obscureText,
                     decoration: InputDecoration(
                       labelText: 'Password',
@@ -129,7 +155,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     onTap: () {
-                      // Password alanına tıklanınca klavye açılır
                       FocusScope.of(context).requestFocus(_passwordFocusNode);
                     },
                   ),
@@ -164,7 +189,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     child: ElevatedButton(
                       onPressed: () {
-                        // Login butonuna basıldığında HomeScreen'e yönlendir
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
@@ -211,7 +235,17 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   SizedBox(height: screenHeight * 0.02),
                   GestureDetector(
-                    onTap: () {},
+                    onTap: () async {
+                      User? user = await _signInWithGoogle();
+                      if (user != null) {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => HomeScreen(),
+                          ),
+                        );
+                      }
+                    },
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(32.0),
                       child: Container(
@@ -229,6 +263,10 @@ class _LoginScreenState extends State<LoginScreen> {
                               height: screenHeight * 0.03,
                             ),
                             SizedBox(width: 8.0),
+                            Text(
+                              "Sign in with Google",
+                              style: TextStyle(color: Colors.black),
+                            ),
                           ],
                         ),
                       ),
@@ -239,6 +277,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     alignment: Alignment.centerRight,
                     child: OutlinedButton(
                       onPressed: () {
+                        // Kayıt ekranına gitmek için yönlendir
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -260,7 +299,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
-                  SizedBox(height: screenHeight * 0.1),
                 ],
               ),
             ),
