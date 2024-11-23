@@ -189,7 +189,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.pushReplacement(
+                        Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => HomeScreen(),
@@ -238,7 +238,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     onTap: () async {
                       User? user = await _signInWithGoogle();
                       if (user != null) {
-                        Navigator.pushReplacement(
+                        Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) => HomeScreen(),
@@ -263,10 +263,6 @@ class _LoginScreenState extends State<LoginScreen> {
                               height: screenHeight * 0.03,
                             ),
                             SizedBox(width: 8.0),
-                            Text(
-                              "Sign in with Google",
-                              style: TextStyle(color: Colors.black),
-                            ),
                           ],
                         ),
                       ),

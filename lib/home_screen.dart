@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+import 'map_screen.dart';
+import 'profile_screen.dart'; // Profil ekranı için import
 
 // Örnek kitap modeli
 class Book {
@@ -219,8 +223,15 @@ class _HomeScreenState extends State<HomeScreen> {
             _currentIndex = index;
           });
 
+          // Profil butonuna tıklanırsa Profil ekranına git
+          if (_currentIndex == 4) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => ProfileScreen()),
+            );
+          }
           // Harita butonuna tıklanırsa yeni bir ekran açılacak
-          if (_currentIndex == 0) {
+          else if (_currentIndex == 0) {
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -232,24 +243,6 @@ class _HomeScreenState extends State<HomeScreen> {
         unselectedItemColor: Colors.white, // Beyaz seçili olmayan öğeler
         backgroundColor: Colors.red, // Kırmızı arka plan
         type: BottomNavigationBarType.fixed,
-      ),
-    );
-  }
-}
-
-class MapScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Harita'),
-        backgroundColor: Colors.blue, // Mavi başlık
-      ),
-      body: Center(
-        child: Text(
-          'Harita ekranı buraya gelecek',
-          style: TextStyle(fontSize: 18),
-        ),
       ),
     );
   }
