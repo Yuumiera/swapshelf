@@ -3,7 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:swapshelfproje/firebase/sign_up_screen.dart';
 import 'home_screen.dart'; // HomeScreen widget'ınızı içe aktarın
-import 'firebase/sign_up_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
