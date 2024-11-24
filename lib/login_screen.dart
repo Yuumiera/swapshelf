@@ -87,7 +87,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   SizedBox(height: screenHeight * 0.1),
                   ClipOval(
                     child: Image.asset(
-                      'lib/img/SwapShelf.png',
+                      'assets\img\SwapShelf.png',
                       width: screenWidth * 0.3,
                       height: screenWidth * 0.3,
                       fit: BoxFit.cover,
@@ -102,10 +102,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       color: Colors.white,
                     ),
                   ),
-                  SizedBox(height: screenHeight * 0.04),
+                  SizedBox(height: screenHeight * 0.015),
                   // Email Giriş Alanı
                   TextField(
                     focusNode: _emailFocusNode,
+                    keyboardType: TextInputType.emailAddress,
                     decoration: InputDecoration(
                       labelText: 'Email',
                       labelStyle: TextStyle(color: Colors.white),
@@ -258,7 +259,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Image.asset(
-                              'lib/img/google_logo.png',
+                              'assets\img\google_logo.png',
                               fit: BoxFit.contain,
                               height: screenHeight * 0.03,
                             ),
