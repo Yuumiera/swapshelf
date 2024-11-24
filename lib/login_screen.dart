@@ -12,20 +12,13 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   bool _obscureText = true;
 
-  // FocusNode'lar
-  FocusNode _emailFocusNode = FocusNode();
-  FocusNode _passwordFocusNode = FocusNode();
+  // TextEditingController'lar
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
 
   // Firebase Authentication ve Google Sign-In instance'ları
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
-
-  @override
-  void dispose() {
-    _emailFocusNode.dispose();
-    _passwordFocusNode.dispose();
-    super.dispose();
-  }
 
   // Google ile giriş fonksiyonu
   Future<User?> _signInWithGoogle() async {
@@ -61,10 +54,10 @@ class _LoginScreenState extends State<LoginScreen> {
     double googleButtonWidth = buttonWidth;
 
     return Scaffold(
-      resizeToAvoidBottomInset: true,
+      resizeToAvoidBottomInset: true, // Klavye görünmesini sağlar
       body: GestureDetector(
         onTap: () {
-          FocusScope.of(context).unfocus();
+          FocusScope.of(context).unfocus(); // Tap gesture ile klavyeyi gizle
         },
         child: Container(
           width: screenWidth,
@@ -77,7 +70,8 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
           child: SingleChildScrollView(
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior
+                .manual, // Klavye davranışını kontrol et
             child: Padding(
               padding:
                   const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
@@ -87,7 +81,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   SizedBox(height: screenHeight * 0.1),
                   ClipOval(
                     child: Image.asset(
-                      'assets\img\SwapShelf.png',
+                      'lib/img/SwapShelf.png',
                       width: screenWidth * 0.3,
                       height: screenWidth * 0.3,
                       fit: BoxFit.cover,
@@ -105,8 +99,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   SizedBox(height: screenHeight * 0.015),
                   // Email Giriş Alanı
                   TextField(
-                    focusNode: _emailFocusNode,
+                    controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
                     decoration: InputDecoration(
                       labelText: 'Email',
                       labelStyle: TextStyle(color: Colors.white),
@@ -120,14 +115,11 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderSide: BorderSide(color: Colors.white, width: 2.0),
                       ),
                     ),
-                    onTap: () {
-                      FocusScope.of(context).requestFocus(_emailFocusNode);
-                    },
                   ),
                   SizedBox(height: screenHeight * 0.015),
                   // Şifre Giriş Alanı
                   TextField(
-                    focusNode: _passwordFocusNode,
+                    controller: _passwordController,
                     obscureText: _obscureText,
                     decoration: InputDecoration(
                       labelText: 'Password',
@@ -155,9 +147,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderSide: BorderSide(color: Colors.white, width: 2.0),
                       ),
                     ),
-                    onTap: () {
-                      FocusScope.of(context).requestFocus(_passwordFocusNode);
-                    },
                   ),
                   SizedBox(height: screenHeight * 0.015),
                   Align(
@@ -190,6 +179,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     child: ElevatedButton(
                       onPressed: () {
+                        // Giriş işlemi yapılabilir
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -259,7 +249,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Image.asset(
-                              'assets\img\google_logo.png',
+                              'assets/img/google_logo.png',
                               fit: BoxFit.contain,
                               height: screenHeight * 0.03,
                             ),
