@@ -14,7 +14,7 @@ class RegisterIcons extends StatelessWidget {
           0.05, // Ekran genişliğine göre soldan boşluk
       child: ClipOval(
         child: Image.asset(
-          'assets\img\book_logo.png', // Kitap logosunun yolu
+          'assets/img/book_logo.png', // Kitap logosunun yolu
           width: logoSize, // Logo boyutunu dinamik hale getirdik
           height: logoSize, // Logo boyutunu dinamik hale getirdik
           fit: BoxFit.cover,

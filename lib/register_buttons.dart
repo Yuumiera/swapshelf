@@ -2,36 +2,46 @@ import 'package:flutter/material.dart';
 import 'login_screen.dart'; // LoginScreen'i dahil ediyoruz
 import 'phone_number_field.dart'; // PhoneNumberField'ı ekliyoruz
 
-class RegisterButtons extends StatelessWidget {
+class RegisterButtons extends StatefulWidget {
   final double screenWidth;
   final double screenHeight;
 
   RegisterButtons({required this.screenWidth, required this.screenHeight});
 
   @override
+  _RegisterButtonsState createState() => _RegisterButtonsState();
+}
+
+class _RegisterButtonsState extends State<RegisterButtons> {
+  TextEditingController birthDateController =
+      TextEditingController(); // Date of Birth controller
+  TextEditingController emailController =
+      TextEditingController(); // Email controller
+  TextEditingController passwordController =
+      TextEditingController(); // Password controller
+  TextEditingController firstNameController =
+      TextEditingController(); // First Name controller
+  TextEditingController lastNameController =
+      TextEditingController(); // Last Name controller
+
+  FocusNode _firstNameFocusNode = FocusNode();
+  FocusNode _lastNameFocusNode = FocusNode();
+  FocusNode _emailFocusNode = FocusNode();
+  FocusNode _passwordFocusNode = FocusNode();
+  FocusNode _phoneFocusNode = FocusNode();
+  FocusNode _birthDateFocusNode = FocusNode();
+
+  @override
   Widget build(BuildContext context) {
-    TextEditingController birthDateController =
-        TextEditingController(); // Date of Birth controller
-    TextEditingController emailController =
-        TextEditingController(); // Email controller
-    TextEditingController passwordController =
-        TextEditingController(); // Password controller
-
-    FocusNode _firstNameFocusNode = FocusNode();
-    FocusNode _lastNameFocusNode = FocusNode();
-    FocusNode _emailFocusNode = FocusNode();
-    FocusNode _passwordFocusNode = FocusNode();
-    FocusNode _phoneFocusNode = FocusNode();
-    FocusNode _birthDateFocusNode = FocusNode();
-
     return Positioned(
-      top: screenHeight * 0.2, // Formun üstten başlama mesafesi
-      left: screenWidth * 0.1,
-      right: screenWidth * 0.1,
+      top: widget.screenHeight * 0.2, // Formun üstten başlama mesafesi
+      left: widget.screenWidth * 0.1,
+      right: widget.screenWidth * 0.1,
       child: Column(
         children: [
           // İsim Giriş Alanı
           TextField(
+            controller: firstNameController,
             focusNode: _firstNameFocusNode,
             textInputAction: TextInputAction.next,
             style: TextStyle(color: Colors.white),
@@ -51,10 +61,11 @@ class RegisterButtons extends StatelessWidget {
             onEditingComplete: () =>
                 FocusScope.of(context).requestFocus(_lastNameFocusNode),
           ),
-          SizedBox(height: screenHeight * 0.02),
+          SizedBox(height: widget.screenHeight * 0.02),
 
           // Soyisim Giriş Alanı
           TextField(
+            controller: lastNameController,
             focusNode: _lastNameFocusNode,
             textInputAction: TextInputAction.next,
             style: TextStyle(color: Colors.white),
@@ -74,7 +85,7 @@ class RegisterButtons extends StatelessWidget {
             onEditingComplete: () =>
                 FocusScope.of(context).requestFocus(_emailFocusNode),
           ),
-          SizedBox(height: screenHeight * 0.02),
+          SizedBox(height: widget.screenHeight * 0.02),
 
           // Email Giriş Alanı
           TextField(
@@ -96,9 +107,9 @@ class RegisterButtons extends StatelessWidget {
               ),
             ),
             onEditingComplete: () =>
-                FocusScope.of(context).requestFocus(_phoneFocusNode),
+                FocusScope.of(context).requestFocus(_passwordFocusNode),
           ),
-          SizedBox(height: screenHeight * 0.02),
+          SizedBox(height: widget.screenHeight * 0.02),
 
           // Şifre Giriş Alanı
           TextField(
@@ -123,7 +134,7 @@ class RegisterButtons extends StatelessWidget {
             onEditingComplete: () =>
                 FocusScope.of(context).requestFocus(_phoneFocusNode),
           ),
-          SizedBox(height: screenHeight * 0.02),
+          SizedBox(height: widget.screenHeight * 0.02),
 
           // Telefon Giriş Alanı
           PhoneNumberField(
@@ -131,7 +142,7 @@ class RegisterButtons extends StatelessWidget {
             onEditingComplete: () =>
                 FocusScope.of(context).requestFocus(_birthDateFocusNode),
           ),
-          SizedBox(height: screenHeight * 0.02),
+          SizedBox(height: widget.screenHeight * 0.02),
 
           // Doğum Tarihi Giriş Alanı
           TextField(
@@ -165,12 +176,12 @@ class RegisterButtons extends StatelessWidget {
               }
             },
           ),
-          SizedBox(height: screenHeight * 0.03),
+          SizedBox(height: widget.screenHeight * 0.03),
 
           // Submit (Gönder) Butonu
           Container(
-            width: screenWidth * 0.8,
-            height: screenHeight * 0.06,
+            width: widget.screenWidth * 0.8,
+            height: widget.screenHeight * 0.06,
             decoration: BoxDecoration(
               color: Colors.blue,
               borderRadius: BorderRadius.circular(32.0),
@@ -202,7 +213,7 @@ class RegisterButtons extends StatelessWidget {
               ),
             ),
           ),
-          SizedBox(height: screenHeight * 0.03),
+          SizedBox(height: widget.screenHeight * 0.03),
 
           // Already Registered? Butonu
           Align(
