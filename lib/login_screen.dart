@@ -105,7 +105,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 SizedBox(height: screenHeight * 0.1),
                 ClipOval(
                   child: Image.asset(
-                    'lib/img/SwapShelf.png',
+                    'assets/img/SwapShelf.png',
                     width: screenWidth * 0.3,
                     height: screenWidth * 0.3,
                     fit: BoxFit.cover,
