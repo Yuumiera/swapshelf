@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:swapshelfproje/firebase/sign_up_screen.dart';
 import 'home_screen.dart'; // HomeScreen widget'ınızı içe aktarın
+import 'package:swapshelfproje/widgets/custom_background.dart'; // CustomBackground widget'ını import ettik
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -86,16 +87,8 @@ class _LoginScreenState extends State<LoginScreen> {
       body: SingleChildScrollView(
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior
             .onDrag, // Klavye manuel olarak gizlenir
-        child: Container(
-          width: screenWidth,
-          height: screenHeight,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Colors.blue, Colors.red],
-            ),
-          ),
+        child: CustomBackground(
+          // Burada CustomBackground widget'ını kullandık
           child: Padding(
             padding:
                 const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
