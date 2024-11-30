@@ -120,7 +120,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   keyboardType: TextInputType.emailAddress,
                   textInputAction: TextInputAction.next,
                   decoration: InputDecoration(
-                    labelText: 'E-posta',
+                    labelText: 'Mail',
                     labelStyle: TextStyle(color: Colors.white),
                     prefixIcon: Icon(Icons.email, color: Colors.white),
                     enabledBorder: OutlineInputBorder(
@@ -139,7 +139,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   controller: _passwordController,
                   obscureText: _obscureText,
                   decoration: InputDecoration(
-                    labelText: 'Şifre',
+                    labelText: 'Password',
                     labelStyle: TextStyle(color: Colors.white),
                     prefixIcon: Icon(Icons.lock, color: Colors.white),
                     suffixIcon: IconButton(
@@ -171,7 +171,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       // Şifremi Unuttum butonuna tıklandığında yapılacak işlem
                     },
                     child: Text(
-                      'Şifremi Unuttum?',
+                      'Forgot Password?',
                       style: TextStyle(
                         color: Colors.white,
                         decoration: TextDecoration.none,
@@ -201,7 +201,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       elevation: 0,
                     ),
                     child: Text(
-                      'Giriş Yap',
+                      'Login',
                       style: TextStyle(color: Colors.white),
                     ),
                   ),
@@ -218,7 +218,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     Text(
-                      'ya da',
+                      'or',
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -282,7 +282,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       );
                     },
                     child: Text(
-                      'Yeni Hesap Oluştur',
+                      'Create New Account',
                       style: TextStyle(color: Colors.white),
                     ),
                   ),
