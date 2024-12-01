@@ -73,38 +73,60 @@ class _SignUpScreenState extends State<SignUpScreen> {
       body: CustomBackground(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+          child: Stack(
             children: [
-              TextField(
-                controller: _nameController,
-                decoration: InputDecoration(labelText: 'Name'),
-              ),
-              SizedBox(height: 10),
-              TextField(
-                controller: _emailController,
-                decoration: InputDecoration(labelText: 'Email'),
-                keyboardType: TextInputType.emailAddress,
-              ),
-              SizedBox(height: 10),
-              TextField(
-                controller: _passwordController,
-                decoration: InputDecoration(labelText: 'Password'),
-                obscureText: true,
-              ),
-              SizedBox(height: 10),
-              PhoneNumberField(
-                controller: _phoneController,
-                focusNode: FocusNode(),
-                onEditingComplete: () {},
-              ),
-              SizedBox(height: 20),
-              _isLoading
-                  ? CircularProgressIndicator()
-                  : ElevatedButton(
-                      onPressed: signUp,
-                      child: Text('Sign Up'),
+              // Geri butonunu daha aşağıya yerleştiriyoruz
+              Padding(
+                padding: const EdgeInsets.only(top: 20.0), // Üstten 20px boşluk
+                child: Align(
+                  alignment: Alignment.topLeft,
+                  child: IconButton(
+                    icon: Icon(
+                      Icons.arrow_back,
+                      color: Colors.white, // Geri butonunu beyaz yap
                     ),
+                    onPressed: () {
+                      Navigator.pop(context); // Bir önceki ekrana geri dön
+                    },
+                  ),
+                ),
+              ),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                      height: 40), // Buton ile form arasına boşluk ekliyoruz
+                  TextField(
+                    controller: _nameController,
+                    decoration: InputDecoration(labelText: 'Name'),
+                  ),
+                  SizedBox(height: 10),
+                  TextField(
+                    controller: _emailController,
+                    decoration: InputDecoration(labelText: 'Email'),
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  SizedBox(height: 10),
+                  TextField(
+                    controller: _passwordController,
+                    decoration: InputDecoration(labelText: 'Password'),
+                    obscureText: true,
+                  ),
+                  SizedBox(height: 10),
+                  PhoneNumberField(
+                    controller: _phoneController,
+                    focusNode: FocusNode(),
+                    onEditingComplete: () {},
+                  ),
+                  SizedBox(height: 20),
+                  _isLoading
+                      ? CircularProgressIndicator()
+                      : ElevatedButton(
+                          onPressed: signUp,
+                          child: Text('Sign Up'),
+                        ),
+                ],
+              ),
             ],
           ),
         ),
