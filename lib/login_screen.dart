@@ -4,6 +4,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:swapshelfproje/firebase/sign_up_screen.dart';
 import 'home_screen.dart'; // HomeScreen widget'ınızı içe aktarın
 import 'package:swapshelfproje/widgets/custom_background.dart'; // CustomBackground widget'ını import ettik
+import 'forgot_password_screen.dart'; // ForgotPasswordScreen'i import ettik
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -168,7 +169,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   alignment: Alignment.centerLeft,
                   child: TextButton(
                     onPressed: () {
-                      // Şifremi Unuttum butonuna tıklandığında yapılacak işlem
+                      // Şifremi Unuttum butonuna tıklandığında ForgotPasswordScreen'e yönlendir
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ForgotPasswordScreen(),
+                        ),
+                      );
                     },
                     child: Text(
                       'Forgot Password?',

@@ -1,8 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import '../login_screen.dart'; // LoginScreen dosyasını dahil edin
-import '../widgets/custom_background.dart'; // CustomBackground import edin
+import '../login_screen.dart';
+import '../widgets/custom_background.dart';
+import 'package:swapshelfproje/phone_number_field.dart';
 
 class SignUpScreen extends StatefulWidget {
   @override
@@ -15,14 +16,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
   bool _isLoading = false;
 
-  // Kullanıcı bilgilerini Firestore'a kaydetme fonksiyonu
   Future<void> saveUserData(User user) async {
     try {
       await _firestore.collection('users').doc(user.uid).set({
         'email': user.email,
         'name': _nameController.text,
+        'phone': _phoneController.text,
         'createdAt': FieldValue.serverTimestamp(),
       });
     } catch (e) {
@@ -30,7 +32,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
   }
 
-  // Kullanıcı kaydetme fonksiyonu
   Future<void> signUp() async {
     setState(() {
       _isLoading = true;
@@ -70,7 +71,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: CustomBackground(
-        // CustomBackground widget'ını kullanıyoruz
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -91,6 +91,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 controller: _passwordController,
                 decoration: InputDecoration(labelText: 'Password'),
                 obscureText: true,
+              ),
+              SizedBox(height: 10),
+              PhoneNumberField(
+                controller: _phoneController,
+                focusNode: FocusNode(),
+                onEditingComplete: () {},
               ),
               SizedBox(height: 20),
               _isLoading
