@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'map_screen.dart';
 import 'profile_screen.dart'; // Profil ekranı için import
+import 'package:swapshelfproje/widgets/gradient_app_bar.dart'; // GradientAppBar import
+import 'package:swapshelfproje/widgets/gradient_bottom_navigation_bar.dart'; // GradientBottomNavigationBar import
 
 // Örnek kitap modeli
 class Book {
@@ -10,18 +12,45 @@ class Book {
   Book({required this.title, required this.imageUrl});
 }
 
+// HomeBackground widget for a minimalist white background
+class HomeBackground extends StatelessWidget {
+  final Widget child;
+
+  HomeBackground({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    // Get screen dimensions
+    final screenSize = MediaQuery.of(context).size;
+    final screenHeight = screenSize.height;
+    final screenWidth = screenSize.width;
+
+    return Container(
+      width: screenWidth,
+      height: screenHeight,
+      decoration: BoxDecoration(
+        color: Colors.white, // White background
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.vertical(
+            top: Radius.circular(30.0)), // Rounded top corners
+        child: child,
+      ),
+    );
+  }
+}
+
 class HomeScreen extends StatefulWidget {
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 0; // Seçili olan tab index
-  TextEditingController _searchController = TextEditingController();
+  int _currentIndex = 2; // Set default tab index to 2 (Home)
 
-  // Örnek kitap verileri
+  // Sample book data fetching function
   Future<List<Book>> fetchBooks() async {
-    await Future.delayed(Duration(seconds: 2)); // Simülasyon için bekleme
+    await Future.delayed(Duration(seconds: 2)); // Simulate loading time
     return [
       Book(title: "Kitap 1", imageUrl: "https://via.placeholder.com/150"),
       Book(title: "Kitap 2", imageUrl: "https://via.placeholder.com/150"),
@@ -35,81 +64,21 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.blue, // Mavi tonları
-        centerTitle: true,
-        title: Row(
-          children: [
-            // Modern arama çubuğu
-            Expanded(
-              child: Container(
-                margin: EdgeInsets.symmetric(horizontal: 8.0),
-                child: Material(
-                  elevation: 5.0,
-                  borderRadius: BorderRadius.circular(30.0),
-                  color: Colors.white,
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      contentPadding: EdgeInsets.symmetric(vertical: 14.0),
-                      hintText: 'Kitap ara...',
-                      hintStyle: TextStyle(color: Colors.black54),
-                      prefixIcon: Icon(
-                        Icons.search,
-                        color: Colors.blue,
-                      ),
-                      suffixIcon: _searchController.text.isNotEmpty
-                          ? IconButton(
-                              icon: Icon(Icons.clear),
-                              onPressed: () {
-                                _searchController.clear();
-                                setState(() {});
-                              },
-                            )
-                          : null,
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: InputBorder.none,
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.blue, width: 2.0),
-                        borderRadius: BorderRadius.circular(30.0),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.grey, width: 1.0),
-                        borderRadius: BorderRadius.circular(30.0),
-                      ),
-                    ),
-                    onChanged: (query) {
-                      // Arama fonksiyonu burada eklenebilir
-                    },
-                  ),
-                ),
-              ),
-            ),
-            // Filtre ikonu
-            IconButton(
-              icon: Icon(Icons.filter_list, color: Colors.white),
-              onPressed: () {
-                // Filtreleme fonksiyonu burada eklenebilir
-              },
-            ),
-          ],
-        ),
+      appBar: GradientAppBar(
+        // Using the custom gradient app bar
+        title: 'Ana Sayfa', // Title of the app bar
+        actions: [
+          IconButton(
+            icon: Icon(Icons.filter_list, color: Colors.white),
+            onPressed: () {
+              // Filter functionality can be added here
+            },
+          ),
+        ],
       ),
       body: SafeArea(
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.blue, // Mavi üst kısım
-                Colors.red, // Kırmızı alt kısım
-              ], // Mavi üstten kırmızıya geçiş
-            ),
-          ),
-          child: _currentIndex ==
-                  2 // Ana sayfa butonuna tıklanınca kitapları göster
+        child: HomeBackground(
+          child: _currentIndex == 2 // Show books when Home tab is selected
               ? FutureBuilder<List<Book>>(
                   future: fetchBooks(),
                   builder: (context, snapshot) {
@@ -127,11 +96,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           int crossAxisCount =
                               constraints.maxWidth > 600 ? 3 : 2;
                           return Scrollbar(
-                            thickness:
-                                8.0, // Kaydırma çubuğunun kalınlığını ayarla
-                            radius: Radius.circular(8.0), // Yuvarlak köşeler
-                            thumbVisibility:
-                                true, // Scroll çubuğu her zaman görünür
+                            thickness: 8.0, // Scroll bar thickness
+                            radius: Radius.circular(8.0), // Rounded corners
+                            thumbVisibility: true, // Always visible scroll bar
                             child: GridView.builder(
                               padding: EdgeInsets.all(12.0),
                               gridDelegate:
@@ -139,14 +106,13 @@ class _HomeScreenState extends State<HomeScreen> {
                                 crossAxisCount: crossAxisCount,
                                 crossAxisSpacing: 12.0,
                                 mainAxisSpacing: 12.0,
-                                childAspectRatio:
-                                    0.8, // Daha dikey kitap kartları
+                                childAspectRatio: 0.8, // Taller book cards
                               ),
                               itemCount: books.length,
                               itemBuilder: (context, index) {
                                 final book = books[index];
                                 return Card(
-                                  elevation: 6, // Daha şık bir gölge
+                                  elevation: 6, // More elegant shadow
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12.0),
                                   ),
@@ -188,15 +154,35 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 )
               : Center(
-                  child: Text(
-                      'Seçilen ekran boş.')), // Diğer ekranlarda içerik gösterme
+                  child:
+                      Text('Seçilen ekran boş.')), // Placeholder for other tabs
         ),
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex, // Seçili olan index
+      bottomNavigationBar: GradientBottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+
+          // Navigate to Profile screen if selected
+          if (_currentIndex == 4) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => ProfileScreen()),
+            );
+          }
+          // Navigate to Map screen if selected
+          else if (_currentIndex == 0) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => MapScreen()),
+            );
+          }
+        },
         items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.map, size: 30), // Daha büyük harita ikonu
+            icon: Icon(Icons.map, size: 30), // Larger map icon
             label: 'Harita',
           ),
           BottomNavigationBarItem(
@@ -216,31 +202,6 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Profil',
           ),
         ],
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-
-          // Profil butonuna tıklanırsa Profil ekranına git
-          if (_currentIndex == 4) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => ProfileScreen()),
-            );
-          }
-          // Harita butonuna tıklanırsa yeni bir ekran açılacak
-          else if (_currentIndex == 0) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (context) => MapScreen()), // Harita ekranına geçiş
-            );
-          }
-        },
-        selectedItemColor: Colors.blue, // Mavi seçili öğe
-        unselectedItemColor: Colors.white, // Beyaz seçili olmayan öğeler
-        backgroundColor: Colors.red, // Kırmızı arka plan
-        type: BottomNavigationBarType.fixed,
       ),
     );
   }

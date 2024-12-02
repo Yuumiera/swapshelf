@@ -12,10 +12,28 @@ class _EmailResetButtonState extends State<EmailResetButton> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   bool _isLoading = false;
 
+  // E-posta adresinin geçerli olup olmadığını kontrol etmek için fonksiyon
+  bool isValidEmail(String email) {
+    RegExp emailRegExp = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    );
+    return emailRegExp.hasMatch(email);
+  }
+
   Future<void> sendEmailVerification(BuildContext context) async {
     final email = _emailController.text.trim();
+
     if (email.isEmpty) {
-      print("Please enter an email address.");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Please enter an email address.")),
+      );
+      return;
+    }
+
+    if (!isValidEmail(email)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Please enter a valid email address.")),
+      );
       return;
     }
 
@@ -26,15 +44,33 @@ class _EmailResetButtonState extends State<EmailResetButton> {
     try {
       await _auth.sendPasswordResetEmail(email: email);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Password reset link sent to $email")),
+        SnackBar(content: Text("Password reset link has been sent to $email")),
       );
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => LoginScreen()),
       );
+    } on FirebaseAuthException catch (e) {
+      // Firebase hatalarını kontrol et
+      if (e.code == 'user-not-found') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("No user found for this email address.")),
+        );
+      } else if (e.code == 'invalid-email') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Invalid email address.")),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content:
+                  Text("Error sending password reset email: ${e.message}")),
+        );
+      }
     } catch (e) {
+      // Diğer olası hatalar için genel bir mesaj göster
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error sending password reset email: $e")),
+        SnackBar(content: Text("An unknown error occurred.")),
       );
     } finally {
       setState(() {
