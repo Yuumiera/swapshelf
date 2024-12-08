@@ -41,10 +41,9 @@ class _SplashScreenState extends State<SplashScreen> {
               Text(
                 "SwapShelf",
                 style: TextStyle(
-                  fontSize: 24,
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
+                    fontSize: 24,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w300),
               ),
             ],
           ),

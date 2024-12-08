@@ -144,7 +144,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   'Swapshelf',
                   style: TextStyle(
                     fontSize: screenWidth * 0.08,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w400,
                     color: Colors.white,
                   ),
                 ),
@@ -215,6 +215,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: TextStyle(
                         color: Colors.white,
                         decoration: TextDecoration.none,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
@@ -261,7 +262,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       'or',
                       style: TextStyle(
                         color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                     Expanded(
@@ -325,7 +326,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     'Create Account',
                     style: TextStyle(
                       color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),
