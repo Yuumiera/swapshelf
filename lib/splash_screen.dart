@@ -19,16 +19,23 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+    final screenHeight = screenSize.height;
+    final screenWidth = screenSize.width;
     return Scaffold(
       body: CustomBackground(
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Image.asset(
-                'assets/img/SwapShelf.png', // Splash ekran logosu
-                width: 150,
-                height: 150,
+              SizedBox(height: screenHeight * 0.1),
+              ClipOval(
+                child: Image.asset(
+                  'assets/img/SwapShelf.png',
+                  width: screenWidth * 0.3,
+                  height: screenWidth * 0.3,
+                  fit: BoxFit.cover,
+                ),
               ),
               SizedBox(height: 20),
               Text(
