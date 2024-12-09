@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'book.dart'; // Kitap modelini import ediyoruz
-import 'profile_screen.dart'; // Profil ekranı import
-import 'widgets/gradient_app_bar.dart'; // GradientAppBar import
-import 'widgets/gradient_bottom_navigation_bar.dart'; // GradientBottomNavigationBar import
+import 'book.dart';
+import 'profile_screen.dart';
+import 'widgets/gradient_app_bar.dart';
+import 'widgets/gradient_bottom_navigation_bar.dart';
 import 'exchange_screen.dart';
+import 'package:swapshelfproje/widgets/book_detail_page.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -12,13 +13,26 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 2; // Ana Sayfa varsayılan sekme
-  List<Book> selectedBooks = []; // Takaslanan kitaplar
+  int _currentIndex = 2; // Varsayılan sekme: Ana Sayfa
+  List<Book> selectedBooks = [];
+  List<Book> allBooks = [];
 
   @override
   void initState() {
     super.initState();
-    _loadTakasBooks(); // Takas kitaplarını Firebase'den yükle
+    _loadBooks();
+    _loadTakasBooks();
+  }
+
+  // Firestore'dan tüm kitapları yükleme
+  Future<void> _loadBooks() async {
+    final querySnapshot =
+        await FirebaseFirestore.instance.collection('books').get();
+    setState(() {
+      allBooks = querySnapshot.docs
+          .map((doc) => Book.fromJson(doc.data() as Map<String, dynamic>))
+          .toList();
+    });
   }
 
   // Firestore'dan takas edilmiş kitapları yükleme
@@ -34,22 +48,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // Firestore'a kitap ekleme
   Future<void> _addBookToFirestore(Book book) async {
-    final docRef = FirebaseFirestore.instance.collection('takaslarim').doc();
-    await docRef.set(book.toJson());
-    _loadTakasBooks(); // Firebase güncellendikten sonra yeniden yükle
+    await FirebaseFirestore.instance
+        .collection('takaslarim')
+        .doc()
+        .set(book.toJson());
+    _loadTakasBooks();
   }
 
   // Ana Sayfa İçeriği
   Widget _buildHomeScreen() {
-    final books = [
-      Book(title: "Kitap 1", imageUrl: "https://via.placeholder.com/150"),
-      Book(title: "Kitap 2", imageUrl: "https://via.placeholder.com/150"),
-      Book(title: "Kitap 3", imageUrl: "https://via.placeholder.com/150"),
-      Book(title: "Kitap 4", imageUrl: "https://via.placeholder.com/150"),
-      Book(title: "Kitap 5", imageUrl: "https://via.placeholder.com/150"),
-      Book(title: "Kitap 6", imageUrl: "https://via.placeholder.com/150"),
-    ];
-
     return GridView.builder(
       padding: EdgeInsets.all(12.0),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -58,47 +65,57 @@ class _HomeScreenState extends State<HomeScreen> {
         mainAxisSpacing: 12.0,
         childAspectRatio: 0.8,
       ),
-      itemCount: books.length,
+      itemCount: allBooks.length,
       itemBuilder: (context, index) {
-        final book = books[index];
-        return Card(
-          elevation: 6,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.0),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: ClipRRect(
-                  borderRadius:
-                      BorderRadius.vertical(top: Radius.circular(12.0)),
-                  child: Image.network(
-                    book.imageUrl,
-                    fit: BoxFit.cover,
-                    width: double.infinity,
+        final book = allBooks[index];
+        return GestureDetector(
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => BookDetailPage(book: book),
+              ),
+            );
+          },
+          child: Card(
+            elevation: 6,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12.0),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius:
+                        BorderRadius.vertical(top: Radius.circular(12.0)),
+                    child: Image.network(
+                      book.imageUrl,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                    ),
                   ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text(
-                  book.title,
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    book.title,
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: ElevatedButton(
-                  onPressed: () {
-                    _addBookToFirestore(book);
-                  },
-                  child: Text('Takas Yap'),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: ElevatedButton(
+                    onPressed: () {
+                      _addBookToFirestore(book);
+                    },
+                    child: Text('Takas Yap'),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
@@ -123,14 +140,13 @@ class _HomeScreenState extends State<HomeScreen> {
           child: ListTile(
             leading: Image.network(book.imageUrl),
             title: Text(book.title),
-            subtitle: Text('Takas Edildi'),
+            subtitle: Text('Takas Yapan: ${book.ownerName}'),
           ),
         );
       },
     );
   }
 
-  // Sayfalara Göre İçerik Getir
   Widget _getBody() {
     switch (_currentIndex) {
       case 0:
