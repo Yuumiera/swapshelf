@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../login_screen.dart';
 import '../widgets/custom_background.dart';
-import 'package:swapshelfproje/phone_number_field.dart';
 
 class SignUpScreen extends StatefulWidget {
   @override
@@ -17,7 +17,24 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
+  //final TextEditingController _jobController = TextEditingController();
   bool _isLoading = false;
+  bool _isPasswordVisible = false; // Şifre görünürlüğü kontrolü
+  DateTime? _dateOfBirth;
+
+  final List<String> _jobs = [
+    'Software Developer',
+    'Designer',
+    'Teacher',
+    'Doctor',
+    'Engineer',
+    'Manager',
+    'Student',
+    'Lawyer',
+    'Nurse',
+    'Other',
+  ];
+  String? _selectedJob;
 
   Future<void> saveUserData(User user) async {
     try {
@@ -25,6 +42,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
         'email': user.email,
         'name': _nameController.text,
         'phone': _phoneController.text,
+        'job': _selectedJob,
+        'dob': _dateOfBirth,
         'createdAt': FieldValue.serverTimestamp(),
       });
     } catch (e) {
@@ -67,6 +86,19 @@ class _SignUpScreenState extends State<SignUpScreen> {
     }
   }
 
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null && picked != _dateOfBirth)
+      setState(() {
+        _dateOfBirth = picked;
+      });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -75,18 +107,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
           padding: const EdgeInsets.all(16.0),
           child: Stack(
             children: [
-              // Geri butonunu daha aşağıya yerleştiriyoruz
               Padding(
-                padding: const EdgeInsets.only(top: 20.0), // Üstten 20px boşluk
+                padding: const EdgeInsets.only(top: 20.0),
                 child: Align(
                   alignment: Alignment.topLeft,
                   child: IconButton(
                     icon: Icon(
                       Icons.arrow_back,
-                      color: Colors.white, // Geri butonunu beyaz yap
+                      color: Colors.white,
                     ),
                     onPressed: () {
-                      Navigator.pop(context); // Bir önceki ekrana geri dön
+                      Navigator.pop(context);
                     },
                   ),
                 ),
@@ -94,31 +125,224 @@ class _SignUpScreenState extends State<SignUpScreen> {
               Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  SizedBox(
-                      height: 40), // Buton ile form arasına boşluk ekliyoruz
+                  SizedBox(height: 40),
+                  // Name TextField
                   TextField(
                     controller: _nameController,
-                    decoration: InputDecoration(labelText: 'Name'),
+                    decoration: InputDecoration(
+                      labelText: 'Name',
+                      labelStyle: TextStyle(color: Colors.white),
+                      filled: true,
+                      fillColor: Colors.transparent,
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.white, width: 1),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.white, width: 2),
+                      ),
+                    ),
+                    style: TextStyle(color: Colors.white),
                   ),
                   SizedBox(height: 10),
+                  // Email TextField
                   TextField(
                     controller: _emailController,
-                    decoration: InputDecoration(labelText: 'Email'),
+                    decoration: InputDecoration(
+                      labelText: 'Email',
+                      labelStyle: TextStyle(color: Colors.white),
+                      filled: true,
+                      fillColor: Colors.transparent,
+                      prefixIcon: Icon(Icons.email, color: Colors.white),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.white, width: 1),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.white, width: 2),
+                      ),
+                    ),
                     keyboardType: TextInputType.emailAddress,
+                    style: TextStyle(color: Colors.white),
                   ),
                   SizedBox(height: 10),
+                  // Password TextField
                   TextField(
                     controller: _passwordController,
-                    decoration: InputDecoration(labelText: 'Password'),
-                    obscureText: true,
+                    obscureText: !_isPasswordVisible, // Şifreyi görünür yap
+                    decoration: InputDecoration(
+                      labelText: 'Password',
+                      labelStyle: TextStyle(color: Colors.white),
+                      filled: true,
+                      fillColor: Colors.transparent,
+                      prefixIcon: Icon(Icons.lock, color: Colors.white),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _isPasswordVisible
+                              ? Icons.visibility
+                              : Icons.visibility_off,
+                          color: Colors.white,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _isPasswordVisible =
+                                !_isPasswordVisible; // Görünürlük değişimi
+                          });
+                        },
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.white, width: 1),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.white, width: 2),
+                      ),
+                    ),
+                    style: TextStyle(color: Colors.white),
                   ),
                   SizedBox(height: 10),
-                  PhoneNumberField(
+                  // Phone Number TextField
+                  TextField(
                     controller: _phoneController,
-                    focusNode: FocusNode(),
-                    onEditingComplete: () {},
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(11),
+                    ],
+                    decoration: InputDecoration(
+                      labelText: 'Phone Number',
+                      labelStyle: TextStyle(color: Colors.white),
+                      filled: true,
+                      fillColor: Colors.transparent,
+                      prefixIcon: Icon(Icons.phone, color: Colors.white),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.white, width: 1),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(color: Colors.white, width: 2),
+                      ),
+                    ),
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  SizedBox(height: 10),
+                  // Date of Birth Picker
+                  GestureDetector(
+                    onTap: () => _selectDate(context),
+                    child: AbsorbPointer(
+                      child: TextField(
+                        controller: TextEditingController(
+                          text: _dateOfBirth == null
+                              ? ''
+                              : '${_dateOfBirth!.day}/${_dateOfBirth!.month}/${_dateOfBirth!.year}',
+                        ),
+                        decoration: InputDecoration(
+                          labelText: 'Date of Birth',
+                          labelStyle: TextStyle(color: Colors.white),
+                          filled: true,
+                          fillColor: Colors.transparent,
+                          prefixIcon:
+                              Icon(Icons.calendar_today, color: Colors.white),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide:
+                                BorderSide(color: Colors.white, width: 1),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide:
+                                BorderSide(color: Colors.white, width: 2),
+                          ),
+                        ),
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: 10),
+                  // Job Autocomplete
+                  Autocomplete<String>(
+                    optionsBuilder: (TextEditingValue textEditingValue) {
+                      if (textEditingValue.text.isEmpty) {
+                        return const Iterable<String>.empty();
+                      }
+                      return _jobs.where((String option) {
+                        return option
+                            .toLowerCase()
+                            .contains(textEditingValue.text.toLowerCase());
+                      });
+                    },
+                    onSelected: (String selection) {
+                      setState(() {
+                        _selectedJob = selection;
+                      });
+                    },
+                    fieldViewBuilder: (BuildContext context,
+                        TextEditingController textEditingController,
+                        FocusNode focusNode,
+                        VoidCallback onFieldSubmitted) {
+                      return TextField(
+                        controller: textEditingController,
+                        focusNode: focusNode,
+                        decoration: InputDecoration(
+                          labelText: 'Job',
+                          labelStyle: TextStyle(color: Colors.white),
+                          filled: true,
+                          fillColor: Colors.transparent,
+                          prefixIcon: Icon(Icons.work, color: Colors.white),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide:
+                                BorderSide(color: Colors.white, width: 1),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide:
+                                BorderSide(color: Colors.white, width: 2),
+                          ),
+                        ),
+                        style: TextStyle(color: Colors.white),
+                      );
+                    },
+                    optionsViewBuilder: (BuildContext context,
+                        AutocompleteOnSelected<String> onSelected,
+                        Iterable<String> options) {
+                      return Align(
+                        alignment: Alignment.topLeft,
+                        child: Material(
+                          child: Container(
+                            width: MediaQuery.of(context).size.width - 32,
+                            color: Colors.white, // Arka plan beyaz
+                            child: ListView.builder(
+                              padding: EdgeInsets.all(8.0),
+                              itemCount: options.length,
+                              itemBuilder: (BuildContext context, int index) {
+                                final String option = options.elementAt(index);
+                                return GestureDetector(
+                                  onTap: () {
+                                    onSelected(option);
+                                  },
+                                  child: ListTile(
+                                    title: Text(
+                                      option,
+                                      style: TextStyle(
+                                          color: Colors
+                                              .grey[800]), // Yazı rengi gri
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                   SizedBox(height: 20),
+                  // Sign Up Button
                   _isLoading
                       ? CircularProgressIndicator()
                       : ElevatedButton(

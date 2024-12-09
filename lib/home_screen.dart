@@ -1,44 +1,10 @@
 import 'package:flutter/material.dart';
-import 'map_screen.dart';
-import 'profile_screen.dart'; // Profil ekranı için import
-import 'package:swapshelfproje/widgets/gradient_app_bar.dart'; // GradientAppBar import
-import 'package:swapshelfproje/widgets/gradient_bottom_navigation_bar.dart'; // GradientBottomNavigationBar import
-
-// Örnek kitap modeli
-class Book {
-  final String title;
-  final String imageUrl;
-
-  Book({required this.title, required this.imageUrl});
-}
-
-// HomeBackground widget for a minimalist white background
-class HomeBackground extends StatelessWidget {
-  final Widget child;
-
-  HomeBackground({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    // Get screen dimensions
-    final screenSize = MediaQuery.of(context).size;
-    final screenHeight = screenSize.height;
-    final screenWidth = screenSize.width;
-
-    return Container(
-      width: screenWidth,
-      height: screenHeight,
-      decoration: BoxDecoration(
-        color: Colors.white, // White background
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.vertical(
-            top: Radius.circular(30.0)), // Rounded top corners
-        child: child,
-      ),
-    );
-  }
-}
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'book.dart'; // Kitap modelini import ediyoruz
+import 'exchange_screen.dart'; // Takas ekranını import ediyoruz
+import 'widgets/gradient_app_bar.dart'; // GradientAppBar import
+import 'widgets/gradient_bottom_navigation_bar.dart'; // GradientBottomNavigationBar import
+import 'widgets/home_background.dart'; // HomeBackground import
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -46,11 +12,36 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 2; // Set default tab index to 2 (Home)
+  int _currentIndex = 2; // Başlangıçta Ana Sayfa sekmesi seçili
+  List<Book> selectedBooks = [];
 
-  // Sample book data fetching function
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedBooks(); // Uygulama başlatıldığında kaydedilen kitapları yükle
+  }
+
+  // Kitapları Firebase'e kaydetme
+  Future<void> addBookToFirestore(Book book) async {
+    final docRef = FirebaseFirestore.instance
+        .collection('exchanges')
+        .doc(); // Yeni bir doküman oluşturur
+    await docRef.set(book.toJson()); // Kitap verisini Firestore'a kaydeder
+  }
+
+  // Kaydedilen kitapları Firebase'den yükleme
+  Future<void> _loadSavedBooks() async {
+    final querySnapshot =
+        await FirebaseFirestore.instance.collection('exchanges').get();
+    setState(() {
+      selectedBooks = querySnapshot.docs
+          .map((doc) => Book.fromJson(doc.data() as Map<String, dynamic>))
+          .toList();
+    });
+  }
+
   Future<List<Book>> fetchBooks() async {
-    await Future.delayed(Duration(seconds: 2)); // Simulate loading time
+    await Future.delayed(Duration(seconds: 2));
     return [
       Book(title: "Kitap 1", imageUrl: "https://via.placeholder.com/150"),
       Book(title: "Kitap 2", imageUrl: "https://via.placeholder.com/150"),
@@ -61,24 +52,22 @@ class _HomeScreenState extends State<HomeScreen> {
     ];
   }
 
+  void _addBookToExchange(Book book) {
+    setState(() {
+      selectedBooks.add(book);
+    });
+    addBookToFirestore(book); // Kitapları Firebase'e kaydediyoruz
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: GradientAppBar(
-        // Using the custom gradient app bar
-        title: 'Ana Sayfa', // Title of the app bar
-        actions: [
-          IconButton(
-            icon: Icon(Icons.filter_list, color: Colors.white),
-            onPressed: () {
-              // Filter functionality can be added here
-            },
-          ),
-        ],
+        title: 'Ana Sayfa',
       ),
       body: SafeArea(
         child: HomeBackground(
-          child: _currentIndex == 2 // Show books when Home tab is selected
+          child: _currentIndex == 2
               ? FutureBuilder<List<Book>>(
                   future: fetchBooks(),
                   builder: (context, snapshot) {
@@ -91,61 +80,58 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: Text('Şu anda listelenecek kitap yok.'));
                     } else {
                       final books = snapshot.data!;
-                      return LayoutBuilder(
-                        builder: (context, constraints) {
-                          int crossAxisCount =
-                              constraints.maxWidth > 600 ? 3 : 2;
-                          return Scrollbar(
-                            thickness: 8.0, // Scroll bar thickness
-                            radius: Radius.circular(8.0), // Rounded corners
-                            thumbVisibility: true, // Always visible scroll bar
-                            child: GridView.builder(
-                              padding: EdgeInsets.all(12.0),
-                              gridDelegate:
-                                  SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: crossAxisCount,
-                                crossAxisSpacing: 12.0,
-                                mainAxisSpacing: 12.0,
-                                childAspectRatio: 0.8, // Taller book cards
-                              ),
-                              itemCount: books.length,
-                              itemBuilder: (context, index) {
-                                final book = books[index];
-                                return Card(
-                                  elevation: 6, // More elegant shadow
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12.0),
+                      return GridView.builder(
+                        padding: EdgeInsets.all(12.0),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 12.0,
+                          mainAxisSpacing: 12.0,
+                          childAspectRatio: 0.8, // Kartlar biraz daha uzun
+                        ),
+                        itemCount: books.length,
+                        itemBuilder: (context, index) {
+                          final book = books[index];
+                          return Card(
+                            elevation: 6,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.0),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.vertical(
+                                        top: Radius.circular(12.0)),
+                                    child: Image.network(
+                                      book.imageUrl,
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                    ),
                                   ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Expanded(
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.vertical(
-                                              top: Radius.circular(12.0)),
-                                          child: Image.network(
-                                            book.imageUrl,
-                                            fit: BoxFit.cover,
-                                            width: double.infinity,
-                                          ),
-                                        ),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.all(12.0),
-                                        child: Text(
-                                          book.title,
-                                          style: TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ],
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(12.0),
+                                  child: Text(
+                                    book.title,
+                                    style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                );
-                              },
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(8.0),
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      _addBookToExchange(
+                                          book); // Takas yapma işlemi
+                                    },
+                                    child: Text('Takas Yap'),
+                                  ),
+                                ),
+                              ],
                             ),
                           );
                         },
@@ -153,9 +139,67 @@ class _HomeScreenState extends State<HomeScreen> {
                     }
                   },
                 )
-              : Center(
-                  child:
-                      Text('Seçilen ekran boş.')), // Placeholder for other tabs
+              : FutureBuilder<List<Book>>(
+                  future: fetchBooksFromFirestore(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Center(child: CircularProgressIndicator());
+                    } else if (snapshot.hasError) {
+                      return Center(child: Text('Bir hata oluştu.'));
+                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return Center(
+                          child: Text('Henüz takas yapılmamış kitap yok.'));
+                    } else {
+                      final books = snapshot.data!;
+                      return GridView.builder(
+                        padding: EdgeInsets.all(12.0),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2, // 2 sütunlu grid
+                          crossAxisSpacing: 12.0,
+                          mainAxisSpacing: 12.0,
+                          childAspectRatio: 0.8, // Kartlar biraz daha uzun
+                        ),
+                        itemCount: books.length,
+                        itemBuilder: (context, index) {
+                          final book = books[index];
+                          return Card(
+                            elevation: 6,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12.0),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.vertical(
+                                        top: Radius.circular(12.0)),
+                                    child: Image.network(
+                                      book.imageUrl,
+                                      fit: BoxFit.cover,
+                                      width: double.infinity,
+                                    ),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.all(12.0),
+                                  child: Text(
+                                    book.title,
+                                    style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                    }
+                  },
+                ),
         ),
       ),
       bottomNavigationBar: GradientBottomNavigationBar(
@@ -164,25 +208,10 @@ class _HomeScreenState extends State<HomeScreen> {
           setState(() {
             _currentIndex = index;
           });
-
-          // Navigate to Profile screen if selected
-          if (_currentIndex == 4) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => ProfileScreen()),
-            );
-          }
-          // Navigate to Map screen if selected
-          else if (_currentIndex == 0) {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => MapScreen()),
-            );
-          }
         },
         items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.map, size: 30), // Larger map icon
+            icon: Icon(Icons.map, size: 30),
             label: 'Harita',
           ),
           BottomNavigationBarItem(
