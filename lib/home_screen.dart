@@ -4,7 +4,8 @@ import 'book.dart'; // Kitap modelini import ediyoruz
 import 'profile_screen.dart'; // Profil ekranı import
 import 'widgets/gradient_app_bar.dart'; // GradientAppBar import
 import 'widgets/gradient_bottom_navigation_bar.dart'; // GradientBottomNavigationBar import
-import 'widgets/home_background.dart'; // HomeBackground import
+import 'package:swapshelfproje/widgets/custom_background.dart';
+import 'exchange_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -136,7 +137,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 0:
         return Center(child: Text('Harita Sayfası'));
       case 1:
-        return _buildTakaslarimScreen();
+        return ExchangeScreen(exchangeBooks: selectedBooks);
       case 2:
         return _buildHomeScreen();
       case 3:
