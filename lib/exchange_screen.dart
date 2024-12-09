@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
 import 'book.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'widgets/gradient_app_bar.dart';
 
 class ExchangeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: GradientAppBar(
-        title: 'Takaslarım',
-      ),
       body: FutureBuilder<List<Book>>(
         future: fetchBooksFromFirestore(),
         builder: (context, snapshot) {

@@ -4,7 +4,6 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'login_screen.dart';
 import 'wishes_screen.dart'; // Yeni eklediğimiz isteklerim ekranı
 import 'package:swapshelfproje/widgets/custom_background.dart';
-import 'package:swapshelfproje/widgets/gradient_app_bar.dart';
 
 class ProfileScreen extends StatelessWidget {
   final GoogleSignIn _googleSignIn = GoogleSignIn();
@@ -26,7 +25,6 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: GradientAppBar(title: 'Profil Ekranı'),
       body: CustomBackground(
         child: SafeArea(
           child: Padding(
