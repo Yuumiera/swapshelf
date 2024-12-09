@@ -2,14 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'login_screen.dart';
-import 'map_screen.dart';
-import 'package:swapshelfproje/exchange_screen.dart';
-import 'home_screen.dart';
-import 'package:swapshelfproje/message_to_person.dart';
 import 'wishes_screen.dart'; // Yeni eklediğimiz isteklerim ekranı
 import 'package:swapshelfproje/widgets/custom_background.dart';
 import 'package:swapshelfproje/widgets/gradient_app_bar.dart';
-import 'package:swapshelfproje/widgets/gradient_bottom_navigation_bar.dart';
 
 class ProfileScreen extends StatelessWidget {
   final GoogleSignIn _googleSignIn = GoogleSignIn();
@@ -161,51 +156,6 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
         ),
-      ),
-      bottomNavigationBar: GradientBottomNavigationBar(
-        currentIndex: 4,
-        onTap: (index) {
-          switch (index) {
-            case 0:
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => MapScreen()),
-              );
-              break;
-            case 1:
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      ExchangeScreen(exchangeBooks: []), // Boş liste örneği
-                ),
-              );
-              break;
-            case 2:
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => HomeScreen()),
-              );
-              break;
-            case 3:
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                    builder: (context) => MessageToPersonScreen()),
-              );
-              break;
-            case 4:
-              break;
-          }
-        },
-        items: [
-          BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Harita'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.swap_horiz), label: 'Takaslarım'),
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Ana Sayfa'),
-          BottomNavigationBarItem(icon: Icon(Icons.message), label: 'Mesajlar'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
-        ],
       ),
     );
   }
