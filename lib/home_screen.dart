@@ -137,7 +137,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 0:
         return Center(child: Text('Harita Sayfası'));
       case 1:
-        return ExchangeScreen(exchangeBooks: selectedBooks);
+        return ExchangeScreen();
       case 2:
         return _buildHomeScreen();
       case 3:
