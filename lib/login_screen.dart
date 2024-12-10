@@ -25,23 +25,36 @@ class _LoginScreenState extends State<LoginScreen> {
   // Google ile giriş fonksiyonu
   Future<User?> _signInWithGoogle() async {
     try {
+      // Mevcut Google hesabı oturumunu kapat
+      await _googleSignIn.signOut();
+
+      // Google kullanıcısını seç
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+
       if (googleUser == null) {
-        return null; // Kullanıcı giriş yapmadı
+        return null; // Kullanıcı seçim yapmadı
       }
 
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
+
       final OAuthCredential credential = GoogleAuthProvider.credential(
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
 
+      // Firebase ile kimlik doğrulama
       UserCredential userCredential =
           await _auth.signInWithCredential(credential);
-      return userCredential.user; // Kullanıcıyı döndürüyoruz
+
+      // Kullanıcı bilgilerini döndür
+      return userCredential.user;
     } catch (error) {
       print("Google Sign-In Hatası: $error");
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text("Google ile giriş sırasında bir hata oluştu: $error"),
+        backgroundColor: Colors.red,
+      ));
       return null;
     }
   }
