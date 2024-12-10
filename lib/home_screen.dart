@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:swapshelfproje/chat_screen.dart';
 import 'book.dart';
 import 'profile_screen.dart';
 import 'widgets/gradient_app_bar.dart';
@@ -156,7 +157,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 2:
         return _buildHomeScreen();
       case 3:
-        return Center(child: Text('Mesajlar Sayfası'));
+        return ChatScreen();
       case 4:
         return ProfileScreen();
       default:
