@@ -78,29 +78,26 @@ class _LibraryScreenState extends State<LibraryScreen> {
     final double screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      body: Column(
-        children: [
-          // Üstte Renkli Alan
-          Container(
-            height: screenHeight * 0.15,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.red, Colors.blue],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            child: Center(
-              child: Text(
-                'Kütüphanem',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
+      appBar: AppBar(
+        title: Text("Kütüphanem"),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.red, Colors.blue],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
           ),
+        ),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: Column(
+        children: [
           // Beyaz Arkaplan
           Expanded(
             child: Container(
