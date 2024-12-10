@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'login_screen.dart';
 import 'wishes_screen.dart'; // Yeni eklediğimiz isteklerim ekranı
+import 'library_screen.dart'; // Kütüphanem ekranı
 import 'package:swapshelfproje/widgets/custom_background.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -112,7 +113,11 @@ class ProfileScreen extends StatelessWidget {
                           width: double.infinity,
                           child: ElevatedButton(
                             onPressed: () {
-                              // Kütüphanem ekranına yönlendirme
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => LibraryScreen()),
+                              );
                             },
                             child: Text('Kütüphanem'),
                             style: ElevatedButton.styleFrom(
