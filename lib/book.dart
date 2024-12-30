@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 class Book {
   final String title; // Kitap ismi
-  final String imageUrl; // Kitap görsel URL'si
   final String ownerName; // Takas yapan kişinin ismi
   final String description; // Kitap açıklaması
   final String tradeDate; // Takas tarihi
@@ -11,7 +10,6 @@ class Book {
 
   Book({
     required this.title,
-    required this.imageUrl,
     required this.ownerName,
     required this.description,
     required this.tradeDate,
@@ -23,7 +21,6 @@ class Book {
   Map<String, dynamic> toJson() {
     return {
       'title': title,
-      'imageUrl': imageUrl,
       'ownerName': ownerName,
       'description': description,
       'tradeDate': tradeDate,
@@ -36,7 +33,6 @@ class Book {
   static Book fromJson(Map<String, dynamic> json) {
     return Book(
       title: json['title'] ?? 'Bilinmeyen Kitap',
-      imageUrl: json['imageUrl'] ?? '',
       ownerName: json['ownerName'] ?? 'Bilinmeyen',
       description: json['description'] ?? 'Açıklama mevcut değil',
       tradeDate: json['tradeDate'] ?? 'Tarih belirtilmemiş',
@@ -64,10 +60,10 @@ class BookWidget extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Center(
-              child: Image.network(
-                book.imageUrl,
-                height: 200,
-                fit: BoxFit.cover,
+              child: Icon(
+                Icons.book,
+                size: 100,
+                color: Colors.grey,
               ),
             ),
             SizedBox(height: 16),

@@ -19,12 +19,12 @@ class BookDetailPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Center(
-              child: Image.network(
-                book.imageUrl,
-                height: 200,
-                fit: BoxFit.cover,
-              ),
-            ),
+                // child: Image.network(
+                // book.imageUrl,
+                // height: 200,
+                // fit: BoxFit.cover,
+                // ),
+                ),
             SizedBox(height: 16),
             Text(
               "Kitap İsmi: ${book.title}",

@@ -27,7 +27,7 @@ class _BookAddFormState extends State<BookAddForm> {
 
       Book newBook = Book(
         title: _title,
-        imageUrl: _imageUrl,
+        //imageUrl: _imageUrl,
         ownerName: _ownerName,
         description: _description,
         tradeDate: _tradeDate,

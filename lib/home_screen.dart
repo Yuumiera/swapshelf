@@ -15,149 +15,92 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 2; // Varsayılan sekme: Ana Sayfa
-  List<Book> selectedBooks = [];
-  List<Book> allBooks = [];
-  bool isLoading = true; // Yüklenme durumu
-
-  @override
-  void initState() {
-    super.initState();
-    _loadData();
-  }
-
-  Future<void> _loadData() async {
-    try {
-      await _loadBooks();
-      await _loadTakasBooks();
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
-    }
-  }
-
-  // Firestore'dan tüm kitapları yükleme
-  Future<void> _loadBooks() async {
-    try {
-      final querySnapshot =
-          await FirebaseFirestore.instance.collection('books').get();
-      allBooks = querySnapshot.docs
-          .map((doc) => Book.fromJson(doc.data() as Map<String, dynamic>))
-          .toList();
-    } catch (e) {
-      debugPrint('Error loading books: $e');
-    }
-  }
-
-  // Firestore'dan takas edilmiş kitapları yükleme
-  Future<void> _loadTakasBooks() async {
-    try {
-      final querySnapshot =
-          await FirebaseFirestore.instance.collection('takaslarim').get();
-      selectedBooks = querySnapshot.docs
-          .map((doc) => Book.fromJson(doc.data() as Map<String, dynamic>))
-          .toList();
-    } catch (e) {
-      debugPrint('Error loading takas books: $e');
-    }
-  }
-
-  // Firestore'a kitap ekleme
-  Future<void> _addBookToFirestore(Book book) async {
-    try {
-      await FirebaseFirestore.instance
-          .collection('takaslarim')
-          .doc()
-          .set(book.toJson());
-      await _loadTakasBooks();
-    } catch (e) {
-      debugPrint('Error adding book: $e');
-    }
-  }
 
   Widget _buildHomeScreen() {
-    return GridView.builder(
-      padding: EdgeInsets.all(12.0),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12.0,
-        mainAxisSpacing: 12.0,
-        childAspectRatio: 0.8,
-      ),
-      itemCount: allBooks.length,
-      itemBuilder: (context, index) {
-        final book = allBooks[index];
-        return GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => BookDetailPage(book: book),
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('library_books')
+          .orderBy('timestamp', descending: true)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return Center(child: Text('Bir hata oluştu!'));
+        }
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
+
+        final books = snapshot.data!.docs.map((doc) {
+          return Book.fromJson(doc.data() as Map<String, dynamic>);
+        }).toList();
+
+        if (books.isEmpty) {
+          return Center(
+            child: Text(
+              'Henüz kitap eklenmedi.',
+              style: TextStyle(fontSize: 18, color: Colors.grey),
+            ),
+          );
+        }
+
+        return GridView.builder(
+          padding: EdgeInsets.all(12.0),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 12.0,
+            mainAxisSpacing: 12.0,
+            childAspectRatio: 0.8,
+          ),
+          itemCount: books.length,
+          itemBuilder: (context, index) {
+            final book = books[index];
+            return GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => BookDetailPage(book: book),
+                  ),
+                );
+              },
+              child: Card(
+                elevation: 6,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12.0),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        book.title,
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: ElevatedButton(
+                        onPressed: () {
+                          debugPrint('Takas işlemi yapılacak: ${book.title}');
+                        },
+                        child: Text('Takas Yap'),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           },
-          child: Card(
-            elevation: 6,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12.0),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    book.title,
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: ElevatedButton(
-                    onPressed: () {
-                      _addBookToFirestore(book);
-                    },
-                    child: Text('Takas Yap'),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildTakaslarimScreen() {
-    if (selectedBooks.isEmpty) {
-      return Center(child: Text('Henüz takas edilmiş kitap yok.'));
-    }
-    return ListView.builder(
-      padding: EdgeInsets.all(12.0),
-      itemCount: selectedBooks.length,
-      itemBuilder: (context, index) {
-        final book = selectedBooks[index];
-        return Card(
-          elevation: 4,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.0),
-          ),
-          child: ListTile(
-            title: Text(book.title),
-            subtitle: Text('Takas Yapan: ${book.ownerName}'),
-          ),
         );
       },
     );
   }
 
   Widget _getBody() {
-    if (isLoading) {
-      return Center(child: CircularProgressIndicator());
-    }
-
     switch (_currentIndex) {
       case 0:
         return Center(child: Text('Harita Sayfası'));
@@ -194,6 +137,180 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.message), label: 'Mesajlar'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
         ],
+      ),
+    );
+  }
+}
+
+class LibraryScreen extends StatefulWidget {
+  @override
+  _LibraryScreenState createState() => _LibraryScreenState();
+}
+
+class _LibraryScreenState extends State<LibraryScreen> {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  Future<void> _showAddBookDialog() async {
+    final TextEditingController _bookNameController = TextEditingController();
+    final TextEditingController _authorNameController = TextEditingController();
+
+    return showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          "Yeni Kitap Ekle",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _bookNameController,
+              decoration: InputDecoration(labelText: 'Kitap Adı'),
+            ),
+            SizedBox(height: 10),
+            TextField(
+              controller: _authorNameController,
+              decoration: InputDecoration(labelText: 'Yazar Adı'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('İptal'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (_bookNameController.text.isNotEmpty &&
+                  _authorNameController.text.isNotEmpty) {
+                await _addBookToFirebase(
+                    _bookNameController.text, _authorNameController.text);
+                Navigator.pop(context);
+              }
+            },
+            child: Text('Ekle'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _addBookToFirebase(String bookName, String authorName) async {
+    await _firestore.collection('library_books').add({
+      'title': bookName,
+      'authorName': authorName,
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Stream<QuerySnapshot> _getBooks() {
+    return _firestore
+        .collection('library_books')
+        .orderBy('timestamp', descending: true)
+        .snapshots();
+  }
+
+  Future<void> _deleteBook(String bookId) async {
+    await _firestore.collection('library_books').doc(bookId).delete();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final double screenHeight = MediaQuery.of(context).size.height;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Kütüphanem"),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.red, Colors.blue],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: Container(
+              color: Colors.white,
+              child: StreamBuilder<QuerySnapshot>(
+                stream: _getBooks(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Bir hata oluştu!'));
+                  }
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  }
+                  final books = snapshot.data!.docs;
+                  if (books.isEmpty) {
+                    return Center(
+                      child: Text(
+                        'Henüz kitap eklenmedi.',
+                        style: TextStyle(fontSize: 18, color: Colors.grey),
+                      ),
+                    );
+                  }
+                  return ListView.builder(
+                    itemCount: books.length,
+                    itemBuilder: (context, index) {
+                      final bookData = books[index];
+                      return Card(
+                        margin:
+                            EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        child: ListTile(
+                          contentPadding: EdgeInsets.all(16),
+                          leading: Icon(Icons.book,
+                              color: Colors.blueAccent, size: 40),
+                          title: Text(
+                            bookData['title'],
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 18),
+                          ),
+                          subtitle: Text(bookData['authorName'] ?? ''),
+                          trailing: IconButton(
+                            icon: Icon(Icons.delete, color: Colors.red),
+                            onPressed: () {
+                              _deleteBook(bookData.id);
+                            },
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ),
+          Container(
+            height: screenHeight * 0.08,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.red, Colors.blue],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: Padding(
+        padding: EdgeInsets.only(bottom: screenHeight * 0.07),
+        child: FloatingActionButton(
+          backgroundColor: Colors.blue,
+          onPressed: _showAddBookDialog,
+          child: Icon(Icons.add, size: 28, color: Colors.white),
+        ),
       ),
     );
   }
