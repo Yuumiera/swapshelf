@@ -31,12 +31,6 @@ class WishesScreen extends StatelessWidget {
 
               return Card(
                 child: ListTile(
-                  leading: Image.network(
-                    book['imageUrl'] ?? '',
-                    width: 50,
-                    height: 50,
-                    fit: BoxFit.cover,
-                  ),
                   title: Text(book['title'] ?? 'Bilinmeyen Kitap'),
                   subtitle: Text(book['author'] ?? 'Bilinmeyen Yazar'),
                   trailing: IconButton(

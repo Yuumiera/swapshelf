@@ -93,13 +93,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Center(
                       child: Column(
                         children: [
-                          CircleAvatar(
-                            radius: 80,
-                            backgroundImage: NetworkImage(
-                              _userData?['profilePhoto'] ??
-                                  'https://via.placeholder.com/150',
-                            ),
-                          ),
                           SizedBox(height: 16),
                           Text(
                             _userData?['name'] ?? 'Full Name',
