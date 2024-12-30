@@ -45,17 +45,6 @@ class ExchangeScreen extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        Expanded(
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.vertical(
-                                top: Radius.circular(12.0)),
-                            child: Image.network(
-                              book.imageUrl,
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                            ),
-                          ),
-                        ),
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Text(

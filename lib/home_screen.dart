@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:swapshelfproje/chat_screen.dart';
 import 'book.dart';
 import 'profile_screen.dart';
 import 'widgets/gradient_app_bar.dart';
 import 'widgets/gradient_bottom_navigation_bar.dart';
 import 'exchange_screen.dart';
-import 'package:swapshelfproje/widgets/book_detail_page.dart';
+import 'widgets/book_detail_page.dart';
+import 'chat_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -17,46 +17,64 @@ class _HomeScreenState extends State<HomeScreen> {
   int _currentIndex = 2; // Varsayılan sekme: Ana Sayfa
   List<Book> selectedBooks = [];
   List<Book> allBooks = [];
+  bool isLoading = true; // Yüklenme durumu
 
   @override
   void initState() {
     super.initState();
-    _loadBooks();
-    _loadTakasBooks();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    try {
+      await _loadBooks();
+      await _loadTakasBooks();
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   // Firestore'dan tüm kitapları yükleme
   Future<void> _loadBooks() async {
-    final querySnapshot =
-        await FirebaseFirestore.instance.collection('books').get();
-    setState(() {
+    try {
+      final querySnapshot =
+          await FirebaseFirestore.instance.collection('books').get();
       allBooks = querySnapshot.docs
           .map((doc) => Book.fromJson(doc.data() as Map<String, dynamic>))
           .toList();
-    });
+    } catch (e) {
+      debugPrint('Error loading books: $e');
+    }
   }
 
   // Firestore'dan takas edilmiş kitapları yükleme
   Future<void> _loadTakasBooks() async {
-    final querySnapshot =
-        await FirebaseFirestore.instance.collection('takaslarim').get();
-    setState(() {
+    try {
+      final querySnapshot =
+          await FirebaseFirestore.instance.collection('takaslarim').get();
       selectedBooks = querySnapshot.docs
           .map((doc) => Book.fromJson(doc.data() as Map<String, dynamic>))
           .toList();
-    });
+    } catch (e) {
+      debugPrint('Error loading takas books: $e');
+    }
   }
 
   // Firestore'a kitap ekleme
   Future<void> _addBookToFirestore(Book book) async {
-    await FirebaseFirestore.instance
-        .collection('takaslarim')
-        .doc()
-        .set(book.toJson());
-    _loadTakasBooks();
+    try {
+      await FirebaseFirestore.instance
+          .collection('takaslarim')
+          .doc()
+          .set(book.toJson());
+      await _loadTakasBooks();
+    } catch (e) {
+      debugPrint('Error adding book: $e');
+    }
   }
 
-  // Ana Sayfa İçeriği
   Widget _buildHomeScreen() {
     return GridView.builder(
       padding: EdgeInsets.all(12.0),
@@ -86,17 +104,6 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius:
-                        BorderRadius.vertical(top: Radius.circular(12.0)),
-                    child: Image.network(
-                      book.imageUrl,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                    ),
-                  ),
-                ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Text(
@@ -123,7 +130,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // Takaslarım Sekmesi İçeriği
   Widget _buildTakaslarimScreen() {
     if (selectedBooks.isEmpty) {
       return Center(child: Text('Henüz takas edilmiş kitap yok.'));
@@ -139,7 +145,6 @@ class _HomeScreenState extends State<HomeScreen> {
             borderRadius: BorderRadius.circular(12.0),
           ),
           child: ListTile(
-            leading: Image.network(book.imageUrl),
             title: Text(book.title),
             subtitle: Text('Takas Yapan: ${book.ownerName}'),
           ),
@@ -149,6 +154,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _getBody() {
+    if (isLoading) {
+      return Center(child: CircularProgressIndicator());
+    }
+
     switch (_currentIndex) {
       case 0:
         return Center(child: Text('Harita Sayfası'));

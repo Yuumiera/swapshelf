@@ -5,6 +5,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'login_screen.dart';
 import 'wishes_screen.dart'; // My Wishes Screen
 import 'package:swapshelfproje/widgets/custom_background.dart';
+import 'library_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   @override
@@ -171,7 +172,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           width: double.infinity,
                           child: ElevatedButton(
                             onPressed: () {
-                              // Navigate to My Library
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) => LibraryScreen()),
+                              );
                             },
                             child: Text('My Library'),
                             style: ElevatedButton.styleFrom(
