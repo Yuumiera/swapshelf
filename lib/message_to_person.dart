@@ -14,7 +14,6 @@ class MessageToPersonScreen extends StatefulWidget {
 
 class _MessageToPersonScreenState extends State<MessageToPersonScreen> {
   final TextEditingController _messageController = TextEditingController();
-  final String currentUser = "current_user"; // Bu kısmı değiştireceğiz
   final FirebaseAuth _auth = FirebaseAuth.instance;
   String? _currentUserName;
 
@@ -25,18 +24,42 @@ class _MessageToPersonScreenState extends State<MessageToPersonScreen> {
   }
 
   Future<void> _getCurrentUserName() async {
-    User? user = _auth.currentUser;
-    if (user != null) {
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
-      if (userDoc.exists) {
-        setState(() {
-          _currentUserName = (userDoc.data() as Map<String, dynamic>)['name'];
-        });
+    try {
+      User? user = _auth.currentUser;
+      if (user != null) {
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+        if (userDoc.exists && mounted) {
+          setState(() {
+            _currentUserName = (userDoc.data() as Map<String, dynamic>)['name'];
+          });
+        }
       }
+    } catch (e) {
+      print('Error getting user name: $e');
     }
+  }
+
+  String _getConversationId() {
+    if (_currentUserName == null) return '';
+
+    // İki kullanıcı arasındaki sohbeti benzersiz bir şekilde tanımlamak için
+    List<String> ids = [_currentUserName!, widget.recipientName]..sort();
+    return '${ids[0]}_${ids[1]}';
+  }
+
+  Stream<QuerySnapshot>? _getMessageStream() {
+    if (_currentUserName == null || widget.recipientName.isEmpty) {
+      return null;
+    }
+
+    return FirebaseFirestore.instance
+        .collection('messages')
+        .where('conversation', isEqualTo: _getConversationId())
+        .orderBy('timestamp', descending: false)
+        .snapshots();
   }
 
   void _sendMessage() {
@@ -50,8 +73,7 @@ class _MessageToPersonScreenState extends State<MessageToPersonScreen> {
         'recipient': widget.recipientName,
         'message': message,
         'timestamp': FieldValue.serverTimestamp(),
-        'conversationId':
-            _getConversationId(_currentUserName!, widget.recipientName),
+        'conversation': _getConversationId(),
       });
       _messageController.clear();
     } else {
@@ -59,25 +81,6 @@ class _MessageToPersonScreenState extends State<MessageToPersonScreen> {
         SnackBar(content: Text("Lütfen bir mesaj yazın!")),
       );
     }
-  }
-
-  Stream<QuerySnapshot>? _getMessageStream() {
-    if (_currentUserName == null || widget.recipientName.isEmpty) {
-      return null;
-    }
-
-    return FirebaseFirestore.instance
-        .collection('messages')
-        .where('sender', isEqualTo: _currentUserName)
-        .where('recipient', isEqualTo: widget.recipientName)
-        .orderBy('timestamp', descending: false)
-        .snapshots();
-  }
-
-  String _getConversationId(String user1, String user2) {
-    // Sohbet ID'sini oluştur (alfabetik sırayla)
-    List<String> sorted = [user1, user2]..sort();
-    return '${sorted[0]}_${sorted[1]}';
   }
 
   @override
@@ -93,15 +96,11 @@ class _MessageToPersonScreenState extends State<MessageToPersonScreen> {
               stream: _getMessageStream(),
               builder: (context, snapshot) {
                 if (_currentUserName == null) {
-                  return Center(
-                    child: CircularProgressIndicator(),
-                  );
+                  return Center(child: CircularProgressIndicator());
                 }
 
                 if (!snapshot.hasData) {
-                  return Center(
-                    child: CircularProgressIndicator(),
-                  );
+                  return Center(child: CircularProgressIndicator());
                 }
 
                 final messages = snapshot.data!.docs;
