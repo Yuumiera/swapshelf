@@ -21,17 +21,23 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _getCurrentUserName() async {
-    User? user = _auth.currentUser;
-    if (user != null) {
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
-      if (userDoc.exists && mounted) {
-        setState(() {
-          _currentUserName = (userDoc.data() as Map<String, dynamic>)['name'];
-        });
+    try {
+      User? user = _auth.currentUser;
+      if (user != null) {
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .get();
+
+        if (userDoc.exists && mounted) {
+          final userData = userDoc.data() as Map<String, dynamic>;
+          setState(() {
+            _currentUserName = userData['name'] ?? 'Unknown User';
+          });
+        }
       }
+    } catch (e) {
+      print('Error getting user name: $e');
     }
   }
 
@@ -40,10 +46,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     return FirebaseFirestore.instance
         .collection('messages')
-        .where(Filter.or(
-          Filter('sender', isEqualTo: _currentUserName),
-          Filter('recipient', isEqualTo: _currentUserName),
-        ))
+        .where('participants', arrayContains: _currentUserName)
         .orderBy('timestamp', descending: true)
         .snapshots();
   }

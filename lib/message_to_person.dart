@@ -32,8 +32,9 @@ class _MessageToPersonScreenState extends State<MessageToPersonScreen> {
             .doc(user.uid)
             .get();
         if (userDoc.exists && mounted) {
+          final userData = userDoc.data() as Map<String, dynamic>;
           setState(() {
-            _currentUserName = (userDoc.data() as Map<String, dynamic>)['name'];
+            _currentUserName = userData['name'] ?? 'Unknown User';
           });
         }
       }
@@ -57,7 +58,14 @@ class _MessageToPersonScreenState extends State<MessageToPersonScreen> {
 
     return FirebaseFirestore.instance
         .collection('messages')
-        .where('conversation', isEqualTo: _getConversationId())
+        .where(Filter.or(
+          Filter('sender', isEqualTo: _currentUserName),
+          Filter('sender', isEqualTo: widget.recipientName),
+        ))
+        .where(Filter.or(
+          Filter('recipient', isEqualTo: _currentUserName),
+          Filter('recipient', isEqualTo: widget.recipientName),
+        ))
         .orderBy('timestamp', descending: false)
         .snapshots();
   }
@@ -73,7 +81,6 @@ class _MessageToPersonScreenState extends State<MessageToPersonScreen> {
         'recipient': widget.recipientName,
         'message': message,
         'timestamp': FieldValue.serverTimestamp(),
-        'conversation': _getConversationId(),
       });
       _messageController.clear();
     } else {
@@ -116,6 +123,15 @@ class _MessageToPersonScreenState extends State<MessageToPersonScreen> {
                     final message =
                         messages[index].data() as Map<String, dynamic>;
                     final isMe = message['sender'] == _currentUserName;
+                    final isBetweenUs =
+                        (message['sender'] == _currentUserName &&
+                                message['recipient'] == widget.recipientName) ||
+                            (message['sender'] == widget.recipientName &&
+                                message['recipient'] == _currentUserName);
+
+                    if (!isBetweenUs) {
+                      return Container();
+                    }
 
                     return Padding(
                       padding: const EdgeInsets.symmetric(
