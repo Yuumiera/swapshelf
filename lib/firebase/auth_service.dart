@@ -5,30 +5,38 @@ class AuthService {
   static final FirebaseAuth _auth = FirebaseAuth.instance;
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  static Future<void> signUp({
+  static Future<String?> signUp({
     required String email,
     required String password,
     required String name,
     required String phone,
+    required int age,
     String? job,
     String? gender,
-    String? city, // Yeni şehir alanı eklendi
+    String? city,
   }) async {
-    // Kullanıcı oluşturuluyor
-    UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
+    try {
+      final UserCredential userCredential =
+          await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
 
-    // Kullanıcı bilgileri Firestore'a kaydediliyor
-    await _firestore.collection('users').doc(userCredential.user!.uid).set({
-      'email': email,
-      'name': name,
-      'phone': phone,
-      'job': job,
-      'gender': gender,
-      'city': city, // Şehir bilgisi kaydediliyor
-      'createdAt': FieldValue.serverTimestamp(),
-    });
+      // Kullanıcı ek bilgilerini Firestore'a kaydet
+      await _firestore.collection('users').doc(userCredential.user!.uid).set({
+        'name': name,
+        'email': email,
+        'phone': phone,
+        'age': age,
+        'job': job,
+        'gender': gender,
+        'city': city,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      return null;
+    } on FirebaseAuthException catch (e) {
+      return e.message;
+    }
   }
 }

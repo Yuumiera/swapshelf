@@ -59,12 +59,14 @@ class _MessageToPersonScreenState extends State<MessageToPersonScreen> {
     return FirebaseFirestore.instance
         .collection('messages')
         .where(Filter.or(
-          Filter('sender', isEqualTo: _currentUserName),
-          Filter('sender', isEqualTo: widget.recipientName),
-        ))
-        .where(Filter.or(
-          Filter('recipient', isEqualTo: _currentUserName),
-          Filter('recipient', isEqualTo: widget.recipientName),
+          Filter.and(
+            Filter('sender', isEqualTo: _currentUserName),
+            Filter('recipient', isEqualTo: widget.recipientName),
+          ),
+          Filter.and(
+            Filter('sender', isEqualTo: widget.recipientName),
+            Filter('recipient', isEqualTo: _currentUserName),
+          ),
         ))
         .orderBy('timestamp', descending: false)
         .snapshots();
@@ -123,15 +125,6 @@ class _MessageToPersonScreenState extends State<MessageToPersonScreen> {
                     final message =
                         messages[index].data() as Map<String, dynamic>;
                     final isMe = message['sender'] == _currentUserName;
-                    final isBetweenUs =
-                        (message['sender'] == _currentUserName &&
-                                message['recipient'] == widget.recipientName) ||
-                            (message['sender'] == widget.recipientName &&
-                                message['recipient'] == _currentUserName);
-
-                    if (!isBetweenUs) {
-                      return Container();
-                    }
 
                     return Padding(
                       padding: const EdgeInsets.symmetric(
@@ -156,7 +149,7 @@ class _MessageToPersonScreenState extends State<MessageToPersonScreen> {
                                 : CrossAxisAlignment.start,
                             children: [
                               Text(
-                                message['sender'],
+                                isMe ? _currentUserName! : widget.recipientName,
                                 style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 12,

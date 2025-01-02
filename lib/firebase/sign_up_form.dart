@@ -7,6 +7,7 @@ class SignUpForm extends StatefulWidget {
 }
 
 class _SignUpFormState extends State<SignUpForm> {
+  final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
@@ -107,37 +108,84 @@ class _SignUpFormState extends State<SignUpForm> {
   String? _selectedGender;
   String? _selectedCity;
 
+  int? _calculateAge(DateTime? birthDate) {
+    if (birthDate == null) return null;
+
+    final today = DateTime.now();
+    var age = today.year - birthDate.year;
+    if (today.month < birthDate.month ||
+        (today.month == birthDate.month && today.day < birthDate.day)) {
+      age--;
+    }
+    return age;
+  }
+
   void _signUp() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      await AuthService.signUp(
-        email: _emailController.text,
-        password: _passwordController.text,
-        name: _nameController.text,
-        phone: _phoneController.text,
-        job: _selectedJob,
-        gender: _selectedGender,
-        city: _selectedCity,
-      );
-
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('Kayıt başarılı! Şimdi giriş yapabilirsiniz.'),
-        backgroundColor: Colors.green,
-      ));
-
-      Navigator.pop(context);
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(e.toString()),
-        backgroundColor: Colors.red,
-      ));
-    } finally {
+    if (_formKey.currentState!.validate()) {
       setState(() {
-        _isLoading = false;
+        _isLoading = true;
       });
+
+      try {
+        if (_nameController.text.isEmpty ||
+            _emailController.text.isEmpty ||
+            _passwordController.text.isEmpty ||
+            _phoneController.text.isEmpty ||
+            _dateOfBirth == null) {
+          throw Exception('Lütfen tüm zorunlu alanları doldurun');
+        }
+
+        final currentDate = DateTime.now();
+        final age = currentDate.year -
+            _dateOfBirth!.year -
+            (currentDate.month < _dateOfBirth!.month ||
+                    (currentDate.month == _dateOfBirth!.month &&
+                        currentDate.day < _dateOfBirth!.day)
+                ? 1
+                : 0);
+
+        final error = await AuthService.signUp(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+          name: _nameController.text.trim(),
+          phone: _phoneController.text.trim(),
+          age: age,
+          job: _selectedJob,
+          gender: _selectedGender,
+          city: _selectedCity,
+        );
+
+        if (error != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Kayıt sırasında bir hata oluştu: $error'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Başarıyla kayıt oldunuz! Giriş yapabilirsiniz.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          await Future.delayed(Duration(seconds: 1));
+          Navigator.pop(context);
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Lütfen tüm bilgileri eksiksiz doldurun'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
     }
   }
 
@@ -176,168 +224,202 @@ class _SignUpFormState extends State<SignUpForm> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            SizedBox(height: 5),
-            Text(
-              'SwapShelf',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            SizedBox(height: 5),
-            Text(
-              'Create Account',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w400,
-                color: Colors.white70,
-              ),
-            ),
-            SizedBox(height: 20),
-            TextField(
-              controller: _nameController,
-              decoration: _inputDecoration('Name', icon: Icons.person),
-              style: TextStyle(color: Colors.white),
-            ),
-            SizedBox(height: 10),
-            TextField(
-              controller: _emailController,
-              keyboardType: TextInputType.emailAddress,
-              decoration: _inputDecoration('Email', icon: Icons.email),
-              style: TextStyle(color: Colors.white),
-            ),
-            SizedBox(height: 10),
-            TextField(
-              controller: _passwordController,
-              obscureText: !_isPasswordVisible,
-              decoration:
-                  _inputDecoration('Password', icon: Icons.lock).copyWith(
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _isPasswordVisible
-                        ? Icons.visibility
-                        : Icons.visibility_off,
-                    color: Colors.white,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _isPasswordVisible = !_isPasswordVisible;
-                    });
-                  },
+      child: Form(
+        key: _formKey,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(height: 5),
+              Text(
+                'SwapShelf',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
                 ),
               ),
-              style: TextStyle(color: Colors.white),
-            ),
-            SizedBox(height: 10),
-            TextField(
-              controller: _phoneController,
-              keyboardType: TextInputType.phone,
-              decoration: _inputDecoration('Phone Number', icon: Icons.phone),
-              style: TextStyle(color: Colors.white),
-            ),
-            SizedBox(height: 10),
-            GestureDetector(
-              onTap: () => _selectDate(context),
-              child: AbsorbPointer(
-                child: TextField(
-                  controller: TextEditingController(
-                    text: _dateOfBirth != null
-                        ? '${_dateOfBirth!.day}/${_dateOfBirth!.month}/${_dateOfBirth!.year}'
-                        : '',
-                  ),
-                  decoration:
-                      _inputDecoration('Date of Birth', icon: Icons.cake),
-                  style: TextStyle(color: Colors.white),
+              SizedBox(height: 5),
+              Text(
+                'Create Account',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w400,
+                  color: Colors.white70,
                 ),
               ),
-            ),
-            SizedBox(height: 10),
-            DropdownButtonFormField<String>(
-              value: _selectedGender,
-              items: _genders.map((String gender) {
-                return DropdownMenuItem(
-                  value: gender,
-                  child: Container(
-                    color: Colors.transparent,
-                    child: Text(gender, style: TextStyle(color: Colors.white)),
+              SizedBox(height: 20),
+              TextFormField(
+                controller: _nameController,
+                decoration: _inputDecoration('Name', icon: Icons.person),
+                style: TextStyle(color: Colors.white),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter your name';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 10),
+              TextFormField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: _inputDecoration('Email', icon: Icons.email),
+                style: TextStyle(color: Colors.white),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter your email';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 10),
+              TextFormField(
+                controller: _passwordController,
+                obscureText: !_isPasswordVisible,
+                decoration:
+                    _inputDecoration('Password', icon: Icons.lock).copyWith(
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _isPasswordVisible
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                      color: Colors.white,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isPasswordVisible = !_isPasswordVisible;
+                      });
+                    },
                   ),
-                );
-              }).toList(),
-              onChanged: (String? newValue) {
-                setState(() {
-                  _selectedGender = newValue;
-                });
-              },
-              decoration: _inputDecoration('Gender', icon: Icons.transgender),
-              style: TextStyle(color: Colors.white),
-              dropdownColor: Colors.transparent,
-            ),
-            SizedBox(height: 10),
-            DropdownButtonFormField<String>(
-              value: _selectedJob,
-              items: _jobs.map((String job) {
-                return DropdownMenuItem(
-                  value: job,
-                  child: Container(
-                    color: Colors.transparent,
-                    child: Text(job, style: TextStyle(color: Colors.white)),
+                ),
+                style: TextStyle(color: Colors.white),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter your password';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 10),
+              TextFormField(
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
+                decoration: _inputDecoration('Phone Number', icon: Icons.phone),
+                style: TextStyle(color: Colors.white),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter your phone number';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 10),
+              GestureDetector(
+                onTap: () => _selectDate(context),
+                child: AbsorbPointer(
+                  child: TextFormField(
+                    controller: TextEditingController(
+                      text: _dateOfBirth != null
+                          ? '${_dateOfBirth!.day}/${_dateOfBirth!.month}/${_dateOfBirth!.year}'
+                          : '',
+                    ),
+                    decoration:
+                        _inputDecoration('Date of Birth', icon: Icons.cake),
+                    style: TextStyle(color: Colors.white),
+                    validator: (value) {
+                      if (_dateOfBirth == null) {
+                        return 'Please select your date of birth';
+                      }
+                      return null;
+                    },
                   ),
-                );
-              }).toList(),
-              onChanged: (String? newValue) {
-                setState(() {
-                  _selectedJob = newValue;
-                });
-              },
-              decoration: _inputDecoration('Job', icon: Icons.work),
-              style: TextStyle(color: Colors.white),
-              dropdownColor: Colors.transparent,
-            ),
-            SizedBox(height: 10),
-            DropdownButtonFormField<String>(
-              value: _selectedCity,
-              items: _cities.map((String city) {
-                return DropdownMenuItem(
-                  value: city,
-                  child: Container(
-                    color: Colors.transparent,
-                    child: Text(city, style: TextStyle(color: Colors.white)),
-                  ),
-                );
-              }).toList(),
-              onChanged: (String? newValue) {
-                setState(() {
-                  _selectedCity = newValue;
-                });
-              },
-              decoration: _inputDecoration('City', icon: Icons.location_city),
-              style: TextStyle(color: Colors.white),
-              dropdownColor: Colors.transparent,
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _isLoading ? null : _signUp,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
-                minimumSize: Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(32),
                 ),
               ),
-              child: _isLoading
-                  ? CircularProgressIndicator(color: Colors.white)
-                  : Text('Sign Up'),
-            ),
-          ],
+              SizedBox(height: 10),
+              DropdownButtonFormField<String>(
+                value: _selectedGender,
+                items: _genders.map((String gender) {
+                  return DropdownMenuItem(
+                    value: gender,
+                    child: Container(
+                      color: Colors.transparent,
+                      child:
+                          Text(gender, style: TextStyle(color: Colors.white)),
+                    ),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedGender = newValue;
+                  });
+                },
+                decoration: _inputDecoration('Gender', icon: Icons.transgender),
+                style: TextStyle(color: Colors.white),
+                dropdownColor: Colors.transparent,
+              ),
+              SizedBox(height: 10),
+              DropdownButtonFormField<String>(
+                value: _selectedJob,
+                items: _jobs.map((String job) {
+                  return DropdownMenuItem(
+                    value: job,
+                    child: Container(
+                      color: Colors.transparent,
+                      child: Text(job, style: TextStyle(color: Colors.white)),
+                    ),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedJob = newValue;
+                  });
+                },
+                decoration: _inputDecoration('Job', icon: Icons.work),
+                style: TextStyle(color: Colors.white),
+                dropdownColor: Colors.transparent,
+              ),
+              SizedBox(height: 10),
+              DropdownButtonFormField<String>(
+                value: _selectedCity,
+                items: _cities.map((String city) {
+                  return DropdownMenuItem(
+                    value: city,
+                    child: Container(
+                      color: Colors.transparent,
+                      child: Text(city, style: TextStyle(color: Colors.white)),
+                    ),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedCity = newValue;
+                  });
+                },
+                decoration: _inputDecoration('City', icon: Icons.location_city),
+                style: TextStyle(color: Colors.white),
+                dropdownColor: Colors.transparent,
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: _isLoading ? null : _signUp,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                  minimumSize: Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(32),
+                  ),
+                ),
+                child: _isLoading
+                    ? CircularProgressIndicator(color: Colors.white)
+                    : Text('Sign Up'),
+              ),
+            ],
+          ),
         ),
       ),
     );
