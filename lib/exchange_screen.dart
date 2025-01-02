@@ -44,13 +44,31 @@ class ExchangeScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12.0),
                     ),
                     child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
+                        Icon(Icons.book, size: 40, color: Colors.blue),
                         Padding(
                           padding: const EdgeInsets.all(8.0),
-                          child: Text(
-                            book.title,
-                            style: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold),
+                          child: Column(
+                            children: [
+                              Text(
+                                book.title,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                textAlign: TextAlign.center,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                'Owner: ${book.ownerName}',
+                                style: TextStyle(fontSize: 12),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -68,8 +86,12 @@ class ExchangeScreen extends StatelessWidget {
 
 Future<List<Book>> fetchBooksFromFirestore() async {
   final querySnapshot =
-      await FirebaseFirestore.instance.collection('takaslarim').get();
-  return querySnapshot.docs
-      .map((doc) => Book.fromJson(doc.data() as Map<String, dynamic>))
-      .toList();
+      await FirebaseFirestore.instance.collection('library_books').get();
+  return querySnapshot.docs.map((doc) {
+    final data = doc.data();
+    return Book.fromJson({
+      ...data,
+      'id': doc.id, // Include document ID if needed
+    });
+  }).toList();
 }

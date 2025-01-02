@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:swapshelfproje/book.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class BookAddForm extends StatefulWidget {
   final VoidCallback onBookAdded;
@@ -13,39 +14,90 @@ class BookAddForm extends StatefulWidget {
 
 class _BookAddFormState extends State<BookAddForm> {
   final _formKey = GlobalKey<FormState>();
-  late String _title,
-      _imageUrl,
-      _ownerName,
-      _description,
-      _tradeDate,
-      _condition,
-      _category;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  String? _currentUserName;
+
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _authorController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _conditionController = TextEditingController();
+  final TextEditingController _categoryController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _getCurrentUserName();
+  }
+
+  Future<void> _getCurrentUserName() async {
+    try {
+      User? user = _auth.currentUser;
+      if (user != null) {
+        DocumentSnapshot userDoc =
+            await _firestore.collection('users').doc(user.uid).get();
+        if (userDoc.exists) {
+          setState(() {
+            _currentUserName = (userDoc.data() as Map<String, dynamic>)['name'];
+          });
+        }
+      }
+    } catch (e) {
+      print('Error getting user name: $e');
+    }
+  }
 
   Future<void> _addBookToFirestore() async {
     if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
+      if (_currentUserName == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content:
+                  Text('Kullanıcı bilgisi alınamadı. Lütfen tekrar deneyin.')),
+        );
+        return;
+      }
 
-      Book newBook = Book(
-        title: _title,
-        //imageUrl: _imageUrl,
-        ownerName: _ownerName,
-        description: _description,
-        tradeDate: _tradeDate,
-        condition: _condition,
-        category: _category,
-      );
+      try {
+        final book = Book(
+          title: _titleController.text.trim(),
+          authorName: _authorController.text.trim(),
+          ownerName: _currentUserName!,
+          description: _descriptionController.text.trim(),
+          tradeDate: DateTime.now().toString(),
+          condition: _conditionController.text.trim().isNotEmpty
+              ? _conditionController.text.trim()
+              : 'New',
+          category: _categoryController.text.trim().isNotEmpty
+              ? _categoryController.text.trim()
+              : 'General',
+          userId: _auth.currentUser?.uid,
+        );
 
-      await FirebaseFirestore.instance
-          .collection('books')
-          .add(newBook.toJson());
+        await _firestore.collection('library_books').add(book.toJson());
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Kitap başarıyla eklendi!')),
-      );
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Kitap başarıyla eklendi!')),
+        );
 
-      widget.onBookAdded(); // Ana sayfadaki kitapları yenilemek için
-      Navigator.of(context).pop();
+        widget.onBookAdded();
+        Navigator.of(context).pop();
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Hata oluştu: $e')),
+        );
+      }
     }
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _authorController.dispose();
+    _descriptionController.dispose();
+    _conditionController.dispose();
+    _categoryController.dispose();
+    super.dispose();
   }
 
   @override
@@ -56,36 +108,32 @@ class _BookAddFormState extends State<BookAddForm> {
         child: Form(
           key: _formKey,
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               TextFormField(
+                controller: _titleController,
                 decoration: InputDecoration(labelText: "Kitap İsmi"),
-                onSaved: (value) => _title = value!,
                 validator: (value) =>
-                    value!.isEmpty ? "Bu alan zorunludur" : null,
+                    value?.trim().isEmpty == true ? "Bu alan zorunludur" : null,
               ),
               TextFormField(
-                decoration: InputDecoration(labelText: "Görsel URL"),
-                onSaved: (value) => _imageUrl = value!,
+                controller: _authorController,
+                decoration: InputDecoration(labelText: "Yazar"),
+                validator: (value) =>
+                    value?.trim().isEmpty == true ? "Bu alan zorunludur" : null,
               ),
               TextFormField(
-                decoration: InputDecoration(labelText: "Takas Yapan Kişi"),
-                onSaved: (value) => _ownerName = value!,
-              ),
-              TextFormField(
+                controller: _descriptionController,
                 decoration: InputDecoration(labelText: "Açıklama"),
-                onSaved: (value) => _description = value!,
+                maxLines: 3,
               ),
               TextFormField(
-                decoration: InputDecoration(labelText: "Takas Tarihi"),
-                onSaved: (value) => _tradeDate = value!,
+                controller: _conditionController,
+                decoration: InputDecoration(labelText: "Durum (Yeni/İyi/Orta)"),
               ),
               TextFormField(
-                decoration: InputDecoration(labelText: "Durum"),
-                onSaved: (value) => _condition = value!,
-              ),
-              TextFormField(
+                controller: _categoryController,
                 decoration: InputDecoration(labelText: "Kategori"),
-                onSaved: (value) => _category = value!,
               ),
             ],
           ),

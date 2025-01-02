@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class LibraryScreen extends StatefulWidget {
   @override
@@ -8,6 +9,27 @@ class LibraryScreen extends StatefulWidget {
 
 class _LibraryScreenState extends State<LibraryScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  String? _currentUserName;
+
+  @override
+  void initState() {
+    super.initState();
+    _getCurrentUserName();
+  }
+
+  Future<void> _getCurrentUserName() async {
+    User? user = _auth.currentUser;
+    if (user != null) {
+      DocumentSnapshot userDoc =
+          await _firestore.collection('users').doc(user.uid).get();
+      if (userDoc.exists) {
+        setState(() {
+          _currentUserName = (userDoc.data() as Map<String, dynamic>)['name'];
+        });
+      }
+    }
+  }
 
   // Kitap ekleme dialogunu göstermek için
   Future<void> _showAddBookDialog() async {
@@ -58,10 +80,18 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   // Firebase Firestore'a kitap ekleme
   Future<void> _addBookToFirebase(String bookName, String authorName) async {
+    if (_currentUserName == null) return;
+
     await _firestore.collection('library_books').add({
-      'bookName': bookName,
+      'title': bookName,
       'authorName': authorName,
+      'ownerName': _currentUserName,
       'timestamp': FieldValue.serverTimestamp(),
+      'userId': _auth.currentUser?.uid,
+      'condition': 'New', // You can add more fields as needed
+      'category': 'General',
+      'description': '',
+      'tradeDate': DateTime.now().toString(),
     });
   }
 
