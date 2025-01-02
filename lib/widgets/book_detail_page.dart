@@ -1,17 +1,67 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:swapshelfproje/message_to_person.dart';
 import 'package:swapshelfproje/book.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class BookDetailPage extends StatelessWidget {
+class BookDetailPage extends StatefulWidget {
   final Book book;
 
   const BookDetailPage({Key? key, required this.book}) : super(key: key);
 
   @override
+  _BookDetailPageState createState() => _BookDetailPageState();
+}
+
+class _BookDetailPageState extends State<BookDetailPage> {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  String? _currentUserName;
+
+  @override
+  void initState() {
+    super.initState();
+    _getCurrentUserName();
+  }
+
+  Future<void> _getCurrentUserName() async {
+    User? user = _auth.currentUser;
+    if (user != null) {
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+      if (userDoc.exists && mounted) {
+        setState(() {
+          _currentUserName = (userDoc.data() as Map<String, dynamic>)['name'];
+        });
+      }
+    }
+  }
+
+  void _navigateToChat() {
+    if (_currentUserName == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Lütfen bekleyin...')),
+      );
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MessageToPersonScreen(
+          recipientName: widget.book.ownerName,
+          currentUserName: _currentUserName!,
+        ),
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(book.title),
+        title: Text(widget.book.title),
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -34,11 +84,11 @@ class BookDetailPage extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildDetailRow('Title', book.title),
-                      _buildDetailRow('Owner', book.ownerName),
-                      _buildDetailRow('Condition', book.condition),
-                      _buildDetailRow('Category', book.category),
-                      _buildDetailRow('Trade Date', book.tradeDate),
+                      _buildDetailRow('Title', widget.book.title),
+                      _buildDetailRow('Owner', widget.book.ownerName),
+                      _buildDetailRow('Condition', widget.book.condition),
+                      _buildDetailRow('Category', widget.book.category),
+                      _buildDetailRow('Trade Date', widget.book.tradeDate),
                       SizedBox(height: 8),
                       Text(
                         'Description:',
@@ -48,7 +98,7 @@ class BookDetailPage extends StatelessWidget {
                         ),
                       ),
                       SizedBox(height: 4),
-                      Text(book.description),
+                      Text(widget.book.description),
                     ],
                   ),
                 ),
@@ -57,18 +107,9 @@ class BookDetailPage extends StatelessWidget {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => MessageToPersonScreen(
-                          recipientName: book.ownerName,
-                        ),
-                      ),
-                    );
-                  },
+                  onPressed: _navigateToChat,
                   icon: Icon(Icons.message),
-                  label: Text('Message ${book.ownerName}'),
+                  label: Text('Message ${widget.book.ownerName}'),
                   style: ElevatedButton.styleFrom(
                     padding: EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
@@ -80,6 +121,10 @@ class BookDetailPage extends StatelessWidget {
             ],
           ),
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _navigateToChat,
+        child: Icon(Icons.message),
       ),
     );
   }

@@ -4,9 +4,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 class MessageToPersonScreen extends StatefulWidget {
   final String recipientName;
+  final String currentUserName;
 
-  const MessageToPersonScreen({Key? key, required this.recipientName})
-      : super(key: key);
+  const MessageToPersonScreen({
+    Key? key,
+    required this.recipientName,
+    required this.currentUserName,
+  }) : super(key: key);
 
   @override
   _MessageToPersonScreenState createState() => _MessageToPersonScreenState();
@@ -14,81 +18,42 @@ class MessageToPersonScreen extends StatefulWidget {
 
 class _MessageToPersonScreenState extends State<MessageToPersonScreen> {
   final TextEditingController _messageController = TextEditingController();
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  String? _currentUserName;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  bool _isFirstLoad = true;
 
-  @override
-  void initState() {
-    super.initState();
-    _getCurrentUserName();
-  }
-
-  Future<void> _getCurrentUserName() async {
-    try {
-      User? user = _auth.currentUser;
-      if (user != null) {
-        DocumentSnapshot userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .get();
-        if (userDoc.exists && mounted) {
-          final userData = userDoc.data() as Map<String, dynamic>;
-          setState(() {
-            _currentUserName = userData['name'] ?? 'Unknown User';
-          });
-        }
-      }
-    } catch (e) {
-      print('Error getting user name: $e');
-    }
-  }
-
-  String _getConversationId() {
-    if (_currentUserName == null) return '';
-
-    // İki kullanıcı arasındaki sohbeti benzersiz bir şekilde tanımlamak için
-    List<String> ids = [_currentUserName!, widget.recipientName]..sort();
-    return '${ids[0]}_${ids[1]}';
-  }
-
-  Stream<QuerySnapshot>? _getMessageStream() {
-    if (_currentUserName == null || widget.recipientName.isEmpty) {
-      return null;
-    }
-
-    return FirebaseFirestore.instance
+  Stream<QuerySnapshot> _getMessageStream() {
+    return _firestore
         .collection('messages')
         .where(Filter.or(
           Filter.and(
-            Filter('sender', isEqualTo: _currentUserName),
+            Filter('sender', isEqualTo: widget.currentUserName),
             Filter('recipient', isEqualTo: widget.recipientName),
           ),
           Filter.and(
             Filter('sender', isEqualTo: widget.recipientName),
-            Filter('recipient', isEqualTo: _currentUserName),
+            Filter('recipient', isEqualTo: widget.currentUserName),
           ),
         ))
-        .orderBy('timestamp', descending: false)
+        .orderBy('timestamp', descending: true)
         .snapshots();
   }
 
-  void _sendMessage() {
-    if (_currentUserName == null) return;
-
+  void _sendMessage() async {
     final message = _messageController.text.trim();
     if (message.isNotEmpty) {
-      FirebaseFirestore.instance.collection('messages').add({
-        'sender': _currentUserName,
-        'senderId': _auth.currentUser?.uid,
-        'recipient': widget.recipientName,
-        'message': message,
-        'timestamp': FieldValue.serverTimestamp(),
-      });
-      _messageController.clear();
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Lütfen bir mesaj yazın!")),
-      );
+      try {
+        await _firestore.collection('messages').add({
+          'sender': widget.currentUserName,
+          'recipient': widget.recipientName,
+          'text': message,
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+        _messageController.clear();
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Mesaj gönderilemedi: $e")),
+        );
+      }
     }
   }
 
@@ -104,64 +69,41 @@ class _MessageToPersonScreenState extends State<MessageToPersonScreen> {
             child: StreamBuilder<QuerySnapshot>(
               stream: _getMessageStream(),
               builder: (context, snapshot) {
-                if (_currentUserName == null) {
-                  return Center(child: CircularProgressIndicator());
+                if (snapshot.hasError) {
+                  print('Stream error: ${snapshot.error}');
+                  return Center(
+                      child: Text('Bir hata oluştu: ${snapshot.error}'));
                 }
 
-                if (!snapshot.hasData) {
+                if (!snapshot.hasData || snapshot.data == null) {
                   return Center(child: CircularProgressIndicator());
                 }
 
                 final messages = snapshot.data!.docs;
                 if (messages.isEmpty) {
                   return Center(
-                    child: Text('Henüz mesaj yok. Sohbete başlayın!'),
-                  );
+                      child: Text('Henüz mesaj yok. Sohbete başlayın!'));
                 }
 
                 return ListView.builder(
+                  reverse: true,
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
-                    final message =
-                        messages[index].data() as Map<String, dynamic>;
-                    final isMe = message['sender'] == _currentUserName;
+                    try {
+                      final message =
+                          messages[index].data() as Map<String, dynamic>;
+                      final isMe = message['sender'] == widget.currentUserName;
 
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8.0,
-                        vertical: 4.0,
-                      ),
-                      child: Align(
-                        alignment:
-                            isMe ? Alignment.centerRight : Alignment.centerLeft,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: isMe ? Colors.blue[100] : Colors.grey[300],
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 8,
-                          ),
-                          child: Column(
-                            crossAxisAlignment: isMe
-                                ? CrossAxisAlignment.end
-                                : CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                isMe ? _currentUserName! : widget.recipientName,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
-                                ),
-                              ),
-                              SizedBox(height: 4),
-                              Text(message['message']),
-                            ],
-                          ),
-                        ),
-                      ),
-                    );
+                      return MessageBubble(
+                        message: message['text'] ?? '',
+                        isMe: isMe,
+                        sender: message['sender'] ?? '',
+                        timestamp: message['timestamp'] as Timestamp?,
+                      );
+                    } catch (e) {
+                      print('Error rendering message at index $index: $e');
+                      return SizedBox.shrink();
+                    }
                   },
                 );
               },
@@ -192,10 +134,58 @@ class _MessageToPersonScreenState extends State<MessageToPersonScreen> {
       ),
     );
   }
+}
+
+class MessageBubble extends StatelessWidget {
+  final String message;
+  final bool isMe;
+  final String sender;
+  final Timestamp? timestamp;
+
+  const MessageBubble({
+    Key? key,
+    required this.message,
+    required this.isMe,
+    required this.sender,
+    this.timestamp,
+  }) : super(key: key);
+
+  String _formatTimestamp(Timestamp? timestamp) {
+    if (timestamp == null) return '';
+    final date = timestamp.toDate();
+    return '${date.hour}:${date.minute.toString().padLeft(2, '0')}';
+  }
 
   @override
-  void dispose() {
-    _messageController.dispose();
-    super.dispose();
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      child: Align(
+        alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+        child: Container(
+          decoration: BoxDecoration(
+            color: isMe ? Colors.blue[100] : Colors.grey[300],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Column(
+            crossAxisAlignment:
+                isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            children: [
+              Text(
+                sender,
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+              ),
+              SizedBox(height: 4),
+              Text(message),
+              Text(
+                _formatTimestamp(timestamp),
+                style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
