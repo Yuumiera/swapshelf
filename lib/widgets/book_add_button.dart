@@ -103,7 +103,7 @@ class _BookAddFormState extends State<BookAddForm> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text("Yeni Kitap Ekle"),
+      title: Text("Add New Book"),
       content: SingleChildScrollView(
         child: Form(
           key: _formKey,
@@ -112,28 +112,29 @@ class _BookAddFormState extends State<BookAddForm> {
             children: [
               TextFormField(
                 controller: _titleController,
-                decoration: InputDecoration(labelText: "Kitap İsmi"),
+                decoration: InputDecoration(labelText: "Book Name"),
                 validator: (value) =>
                     value?.trim().isEmpty == true ? "Bu alan zorunludur" : null,
               ),
               TextFormField(
                 controller: _authorController,
-                decoration: InputDecoration(labelText: "Yazar"),
+                decoration: InputDecoration(labelText: "Author"),
                 validator: (value) =>
                     value?.trim().isEmpty == true ? "Bu alan zorunludur" : null,
               ),
               TextFormField(
                 controller: _descriptionController,
-                decoration: InputDecoration(labelText: "Açıklama"),
+                decoration: InputDecoration(labelText: "Description"),
                 maxLines: 3,
               ),
               TextFormField(
                 controller: _conditionController,
-                decoration: InputDecoration(labelText: "Durum (Yeni/İyi/Orta)"),
+                decoration:
+                    InputDecoration(labelText: "Condition (New/Good/Fair)"),
               ),
               TextFormField(
                 controller: _categoryController,
-                decoration: InputDecoration(labelText: "Kategori"),
+                decoration: InputDecoration(labelText: "Category"),
               ),
             ],
           ),
@@ -142,11 +143,11 @@ class _BookAddFormState extends State<BookAddForm> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: Text("İptal"),
+          child: Text("Cancel"),
         ),
         ElevatedButton(
           onPressed: _addBookToFirestore,
-          child: Text("Ekle"),
+          child: Text("Add"),
         ),
       ],
     );

@@ -1,11 +1,12 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'login_screen.dart';
-import 'wishes_screen.dart'; // My Wishes Screen
+import 'wishes_screen.dart';
 import 'package:swapshelfproje/widgets/custom_background.dart';
 import 'library_screen.dart';
+import 'firebase/auth_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   @override
@@ -36,6 +37,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
         if (userDoc.exists) {
           var data = userDoc.data();
           if (data != null && data is Map<String, dynamic>) {
+            // Doğum tarihinden yaşı hesapla
+            if (data['dateOfBirth'] != null) {
+              Timestamp birthDateTimestamp = data['dateOfBirth'];
+              DateTime birthDate = birthDateTimestamp.toDate();
+              int currentAge = AuthService.calculateAge(birthDate);
+
+              // Yaşı güncelle
+              await FirebaseFirestore.instance
+                  .collection('users')
+                  .doc(currentUser.uid)
+                  .update({'age': currentAge});
+
+              data['age'] = currentAge;
+            }
+
             setState(() {
               _userData = data;
             });
@@ -64,19 +80,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // Yaş hesaplama fonksiyonu
-  int _calculateAge(Timestamp? birthDate) {
-    if (birthDate == null) return 0;
-    DateTime dob = birthDate.toDate();
-    DateTime today = DateTime.now();
-    int age = today.year - dob.year;
-    if (today.month < dob.month ||
-        (today.month == dob.month && today.day < dob.day)) {
-      age--;
-    }
-    return age;
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -101,7 +104,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           SizedBox(height: 4),
                           Text(
-                            'Age: ${_calculateAge(_userData?['dob'])}',
+                            'Age: ${_userData?['age'] ?? 'Unknown'}',
                             style: TextStyle(
                                 fontSize: 16,
                                 color: const Color.fromARGB(255, 0, 0, 0)),
@@ -138,7 +141,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ],
                       ),
                     ),
-                    // Adding a Spacer to push the buttons further down
                     Spacer(),
                     Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -184,7 +186,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             onPressed: () {
                               // Navigate to Past Swaps
                             },
-                            child: Text('Past Swaps'),
+                            child: Text('Past Exchanges'),
                             style: ElevatedButton.styleFrom(
                               padding: EdgeInsets.symmetric(vertical: 14),
                             ),

@@ -108,15 +108,16 @@ class _SignUpFormState extends State<SignUpForm> {
   String? _selectedGender;
   String? _selectedCity;
 
-  int? _calculateAge(DateTime? birthDate) {
-    if (birthDate == null) return null;
+  int calculateAge(DateTime birthDate) {
+    DateTime currentDate = DateTime.now();
+    int age = currentDate.year - birthDate.year;
 
-    final today = DateTime.now();
-    var age = today.year - birthDate.year;
-    if (today.month < birthDate.month ||
-        (today.month == birthDate.month && today.day < birthDate.day)) {
+    if (currentDate.month < birthDate.month ||
+        (currentDate.month == birthDate.month &&
+            currentDate.day < birthDate.day)) {
       age--;
     }
+
     return age;
   }
 
@@ -132,17 +133,11 @@ class _SignUpFormState extends State<SignUpForm> {
             _passwordController.text.isEmpty ||
             _phoneController.text.isEmpty ||
             _dateOfBirth == null) {
-          throw Exception('Lütfen tüm zorunlu alanları doldurun');
+          throw Exception('Please fill in all required fields');
         }
 
         final currentDate = DateTime.now();
-        final age = currentDate.year -
-            _dateOfBirth!.year -
-            (currentDate.month < _dateOfBirth!.month ||
-                    (currentDate.month == _dateOfBirth!.month &&
-                        currentDate.day < _dateOfBirth!.day)
-                ? 1
-                : 0);
+        final age = calculateAge(_dateOfBirth!);
 
         final error = await AuthService.signUp(
           email: _emailController.text.trim(),
@@ -153,19 +148,20 @@ class _SignUpFormState extends State<SignUpForm> {
           job: _selectedJob,
           gender: _selectedGender,
           city: _selectedCity,
+          dateOfBirth: _dateOfBirth!,
         );
 
         if (error != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Kayıt sırasında bir hata oluştu: $error'),
+              content: Text('An error occurred during registration: $error'),
               backgroundColor: Colors.red,
             ),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Başarıyla kayıt oldunuz! Giriş yapabilirsiniz.'),
+              content: Text('Successfully registered! You can now login.'),
               backgroundColor: Colors.green,
             ),
           );
@@ -175,7 +171,7 @@ class _SignUpFormState extends State<SignUpForm> {
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Lütfen tüm bilgileri eksiksiz doldurun'),
+            content: Text('Please fill in all information completely'),
             backgroundColor: Colors.orange,
           ),
         );

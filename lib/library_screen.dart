@@ -60,7 +60,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("Kütüphanem"),
+        title: Text("My Library"),
         backgroundColor: Colors.transparent,
         elevation: 0,
         flexibleSpace: Container(
@@ -86,7 +86,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 stream: _getBooks(),
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
-                    return Center(child: Text('Bir hata oluştu!'));
+                    return Center(child: Text('An error occurred!'));
                   }
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return Center(child: CircularProgressIndicator());
@@ -95,7 +95,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   if (books.isEmpty) {
                     return Center(
                       child: Text(
-                        'Henüz kitap eklenmedi.',
+                        'No books added yet.',
                         style: TextStyle(fontSize: 18, color: Colors.grey),
                       ),
                     );
@@ -113,12 +113,12 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           leading: Icon(Icons.book,
                               color: Colors.blueAccent, size: 40),
                           title: Text(
-                            bookData['title'] ?? 'İsimsiz Kitap',
+                            bookData['title'] ?? 'Untitled Book',
                             style: TextStyle(
                                 fontWeight: FontWeight.bold, fontSize: 18),
                           ),
-                          subtitle: Text(
-                              bookData['authorName'] ?? 'Yazar bilgisi yok'),
+                          subtitle:
+                              Text(bookData['authorName'] ?? 'Unknown Author'),
                           trailing: IconButton(
                             icon: Icon(Icons.delete, color: Colors.red),
                             onPressed: () {
@@ -168,7 +168,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(
-          "Yeni Kitap Ekle",
+          "Add New Book",
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         content: Column(
@@ -176,19 +176,19 @@ class _LibraryScreenState extends State<LibraryScreen> {
           children: [
             TextField(
               controller: _bookNameController,
-              decoration: InputDecoration(labelText: 'Kitap Adı'),
+              decoration: InputDecoration(labelText: 'Book Name'),
             ),
             SizedBox(height: 10),
             TextField(
               controller: _authorNameController,
-              decoration: InputDecoration(labelText: 'Yazar Adı'),
+              decoration: InputDecoration(labelText: 'Author Name'),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('İptal'),
+            child: Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () async {
@@ -199,7 +199,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 Navigator.pop(context);
               }
             },
-            child: Text('Ekle'),
+            child: Text('Add'),
           ),
         ],
       ),

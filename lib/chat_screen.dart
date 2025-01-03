@@ -60,19 +60,19 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(title: Text("Sohbetler")),
+        appBar: AppBar(title: Text("Chats")),
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text("Sohbetler")),
+      appBar: AppBar(title: Text("Chats")),
       body: StreamBuilder<QuerySnapshot>(
         stream: _getChatsStream(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             print('Stream error: ${snapshot.error}');
-            return Center(child: Text('Bir hata oluştu: ${snapshot.error}'));
+            return Center(child: Text('An error occurred: ${snapshot.error}'));
           }
 
           if (!snapshot.hasData || snapshot.data == null) {
@@ -81,7 +81,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
           final docs = snapshot.data!.docs;
           if (docs.isEmpty) {
-            return Center(child: Text('Henüz mesajınız yok'));
+            return Center(child: Text('No messages yet'));
           }
 
           Map<String, Map<String, dynamic>> uniqueChats = {};
@@ -164,17 +164,17 @@ class _ChatScreenState extends State<ChatScreen> {
       return '${date.hour}:${date.minute.toString().padLeft(2, '0')}';
     } else if (difference.inDays == 1) {
       // Dün ise
-      return 'Dün';
+      return 'Yesterday';
     } else if (difference.inDays < 7) {
       // Son 7 gün içinde ise gün adını göster
       final weekDays = [
-        'Pazartesi',
-        'Salı',
-        'Çarşamba',
-        'Perşembe',
-        'Cuma',
-        'Cumartesi',
-        'Pazar'
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+        'Friday',
+        'Saturday',
+        'Sunday'
       ];
       return weekDays[date.weekday - 1];
     } else {

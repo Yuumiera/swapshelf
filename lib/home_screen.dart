@@ -14,7 +14,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _currentIndex = 2; // Varsayılan sekme: Ana Sayfa
+  int _currentIndex = 2; // Default tab: Home
 
   Widget _buildHomeScreen() {
     return StreamBuilder<QuerySnapshot>(
@@ -98,9 +98,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       padding: const EdgeInsets.all(8.0),
                       child: ElevatedButton(
                         onPressed: () {
-                          debugPrint('Takas işlemi yapılacak: ${book.title}');
+                          debugPrint('Exchange will be made: ${book.title}');
                         },
-                        child: Text('Takas Yap'),
+                        child: Text('Exchange'),
                       ),
                     ),
                   ],
@@ -116,7 +116,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _getBody() {
     switch (_currentIndex) {
       case 0:
-        return Center(child: Text('Harita Sayfası'));
+        return Center(child: Text('Map Page'));
       case 1:
         return ExchangeScreen();
       case 2:
@@ -133,7 +133,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: GradientAppBar(title: 'Ana Sayfa'),
+      appBar: GradientAppBar(title: 'Home'),
       body: SafeArea(child: _getBody()),
       bottomNavigationBar: GradientBottomNavigationBar(
         currentIndex: _currentIndex,
@@ -143,12 +143,12 @@ class _HomeScreenState extends State<HomeScreen> {
           });
         },
         items: [
-          BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Harita'),
+          BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Map'),
           BottomNavigationBarItem(
-              icon: Icon(Icons.swap_horiz), label: 'Takaslarım'),
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Ana Sayfa'),
-          BottomNavigationBarItem(icon: Icon(Icons.message), label: 'Mesajlar'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profil'),
+              icon: Icon(Icons.swap_horiz), label: 'Exchanges'),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.message), label: 'Messages'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
     );
@@ -234,7 +234,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("Kütüphanem"),
+        title: Text("My Library"),
         backgroundColor: Colors.transparent,
         elevation: 0,
         flexibleSpace: Container(

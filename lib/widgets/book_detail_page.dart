@@ -41,7 +41,7 @@ class _BookDetailPageState extends State<BookDetailPage> {
   void _navigateToChat() {
     if (_currentUserName == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Lütfen bekleyin...')),
+        const SnackBar(content: Text('Please wait...')),
       );
       return;
     }

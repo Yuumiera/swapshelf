@@ -10,7 +10,7 @@ class AddBookScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Yeni Kitap Ekle'),
+        title: Text('Add New Book'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -19,7 +19,7 @@ class AddBookScreen extends StatelessWidget {
             TextField(
               controller: titleController,
               decoration: InputDecoration(
-                labelText: 'Kitap Adı',
+                labelText: 'Book Name',
                 border: OutlineInputBorder(),
               ),
             ),
@@ -27,7 +27,7 @@ class AddBookScreen extends StatelessWidget {
             TextField(
               controller: authorController,
               decoration: InputDecoration(
-                labelText: 'Yazar',
+                labelText: 'Author',
                 border: OutlineInputBorder(),
               ),
             ),
@@ -35,7 +35,7 @@ class AddBookScreen extends StatelessWidget {
             TextField(
               controller: imageUrlController,
               decoration: InputDecoration(
-                labelText: 'Görsel URL',
+                labelText: 'Image URL',
                 border: OutlineInputBorder(),
               ),
             ),
@@ -53,22 +53,22 @@ class AddBookScreen extends StatelessWidget {
                     });
 
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Kitap başarıyla eklendi!')),
+                      SnackBar(content: Text('Book added successfully!')),
                     );
 
                     Navigator.pop(context);
                   } catch (e) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Hata: $e')),
+                      SnackBar(content: Text('Error: $e')),
                     );
                   }
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Lütfen tüm alanları doldurun!')),
+                    SnackBar(content: Text('Please fill all fields!')),
                   );
                 }
               },
-              child: Text('Ekle'),
+              child: Text('Add'),
             ),
           ],
         ),

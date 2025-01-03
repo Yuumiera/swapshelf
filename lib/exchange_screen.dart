@@ -13,9 +13,9 @@ class ExchangeScreen extends StatelessWidget {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
-            return Center(child: Text('Bir hata oluştu.'));
+            return Center(child: Text('An error occurred.'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(child: Text('Henüz takas yapılmamış kitap yok.'));
+            return Center(child: Text('No books available for exchange.'));
           } else {
             final books = snapshot.data!;
             return GridView.builder(

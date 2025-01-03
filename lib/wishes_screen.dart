@@ -9,7 +9,7 @@ class WishesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('İsteklerim')),
+      appBar: AppBar(title: Text('My Wishes')),
       body: StreamBuilder<QuerySnapshot>(
         stream: booksCollection.snapshots(),
         builder: (context, snapshot) {
@@ -18,7 +18,7 @@ class WishesScreen extends StatelessWidget {
           }
 
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return Center(child: Text('Henüz bir kitap eklenmedi.'));
+            return Center(child: Text('No books added yet.'));
           }
 
           final books = snapshot.data!.docs;
@@ -63,11 +63,11 @@ class WishesScreen extends StatelessWidget {
     try {
       await booksCollection.doc(bookId).delete();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Kitap başarıyla silindi!')),
+        SnackBar(content: Text('Book deleted successfully!')),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Silme sırasında bir hata oluştu: $e')),
+        SnackBar(content: Text('Error while deleting: $e')),
       );
     }
   }
