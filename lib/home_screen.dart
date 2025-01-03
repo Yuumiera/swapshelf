@@ -8,6 +8,7 @@ import 'exchange_screen.dart';
 import 'widgets/book_detail_page.dart';
 import 'chat_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'map_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -173,7 +174,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _getBody() {
     switch (_currentIndex) {
       case 0:
-        return Center(child: Text('Map Page'));
+        return MapScreen();
       case 1:
         return ExchangeScreen();
       case 2:
