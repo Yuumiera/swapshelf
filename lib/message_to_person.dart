@@ -61,7 +61,7 @@ class _MessageToPersonScreenState extends State<MessageToPersonScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("${widget.recipientName} ile Sohbet"),
+        title: Text("Chat with ${widget.recipientName}"),
       ),
       body: Column(
         children: [
@@ -72,7 +72,7 @@ class _MessageToPersonScreenState extends State<MessageToPersonScreen> {
                 if (snapshot.hasError) {
                   print('Stream error: ${snapshot.error}');
                   return Center(
-                      child: Text('Bir hata oluştu: ${snapshot.error}'));
+                      child: Text('An error occurred: ${snapshot.error}'));
                 }
 
                 if (!snapshot.hasData || snapshot.data == null) {
@@ -82,7 +82,7 @@ class _MessageToPersonScreenState extends State<MessageToPersonScreen> {
                 final messages = snapshot.data!.docs;
                 if (messages.isEmpty) {
                   return Center(
-                      child: Text('Henüz mesaj yok. Sohbete başlayın!'));
+                      child: Text('No messages yet. Start chatting!'));
                 }
 
                 return ListView.builder(
@@ -117,7 +117,7 @@ class _MessageToPersonScreenState extends State<MessageToPersonScreen> {
                   child: TextField(
                     controller: _messageController,
                     decoration: InputDecoration(
-                      hintText: "Mesajınızı yazın...",
+                      hintText: "Type your message...",
                       border: OutlineInputBorder(),
                     ),
                   ),
@@ -125,7 +125,7 @@ class _MessageToPersonScreenState extends State<MessageToPersonScreen> {
                 SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: _sendMessage,
-                  child: Text("Gönder"),
+                  child: Text("Send"),
                 ),
               ],
             ),
