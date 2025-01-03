@@ -57,9 +57,9 @@ class _BookAddFormState extends State<BookAddForm> {
         );
         return;
       }
-
       try {
         final book = Book(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
           title: _titleController.text.trim(),
           authorName: _authorController.text.trim(),
           ownerName: _currentUserName!,

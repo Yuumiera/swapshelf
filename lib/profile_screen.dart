@@ -7,6 +7,7 @@ import 'wishes_screen.dart';
 import 'package:swapshelfproje/widgets/custom_background.dart';
 import 'library_screen.dart';
 import 'firebase/auth_service.dart';
+import 'past_exchanges_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   @override
@@ -184,7 +185,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           width: double.infinity,
                           child: ElevatedButton(
                             onPressed: () {
-                              // Navigate to Past Swaps
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        PastExchangesScreen()),
+                              );
                             },
                             child: Text('Past Exchanges'),
                             style: ElevatedButton.styleFrom(

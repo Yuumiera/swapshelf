@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Firebase Firestore için
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AddBookScreen extends StatelessWidget {
   final TextEditingController titleController = TextEditingController();
   final TextEditingController authorController = TextEditingController();
-  final TextEditingController imageUrlController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -31,25 +30,15 @@ class AddBookScreen extends StatelessWidget {
                 border: OutlineInputBorder(),
               ),
             ),
-            SizedBox(height: 16),
-            TextField(
-              controller: imageUrlController,
-              decoration: InputDecoration(
-                labelText: 'Image URL',
-                border: OutlineInputBorder(),
-              ),
-            ),
             SizedBox(height: 24),
             ElevatedButton(
               onPressed: () async {
                 if (titleController.text.isNotEmpty &&
-                    authorController.text.isNotEmpty &&
-                    imageUrlController.text.isNotEmpty) {
+                    authorController.text.isNotEmpty) {
                   try {
                     await FirebaseFirestore.instance.collection('wishes').add({
                       'title': titleController.text.trim(),
                       'author': authorController.text.trim(),
-                      'imageUrl': imageUrlController.text.trim(),
                     });
 
                     ScaffoldMessenger.of(context).showSnackBar(

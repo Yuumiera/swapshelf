@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Book {
+  final String id;
   final String title;
   final String ownerName;
   final String description;
@@ -12,6 +13,7 @@ class Book {
   final String? userId;
 
   Book({
+    required this.id,
     required this.title,
     required this.ownerName,
     required this.description,
@@ -36,8 +38,9 @@ class Book {
     };
   }
 
-  static Book fromJson(Map<String, dynamic> json) {
+  static Book fromJson(Map<String, dynamic> json, {String? id}) {
     return Book(
+      id: id ?? 'unknown',
       title: json['title'] ?? 'Unknown Book',
       ownerName: json['ownerName'] ?? 'Unknown Owner',
       description: json['description'] ?? 'No description',

@@ -7,6 +7,7 @@ import 'widgets/gradient_bottom_navigation_bar.dart';
 import 'exchange_screen.dart';
 import 'widgets/book_detail_page.dart';
 import 'chat_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -31,7 +32,10 @@ class _HomeScreenState extends State<HomeScreen> {
         }
 
         final books = snapshot.data!.docs.map((doc) {
-          return Book.fromJson(doc.data() as Map<String, dynamic>);
+          return Book.fromJson(
+            doc.data() as Map<String, dynamic>,
+            id: doc.id,
+          );
         }).toList();
 
         if (books.isEmpty) {
@@ -97,9 +101,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: ElevatedButton(
-                        onPressed: () {
-                          debugPrint('Exchange will be made: ${book.title}');
-                        },
+                        onPressed: () => _addToExchanges(book),
                         child: Text('Exchange'),
                       ),
                     ),
@@ -111,6 +113,61 @@ class _HomeScreenState extends State<HomeScreen> {
         );
       },
     );
+  }
+
+  Future<void> _addToExchanges(Book book) async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Please login to add books to exchanges')),
+        );
+        return;
+      }
+
+      if (book.userId == user.uid) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('You cannot exchange your own book')),
+        );
+        return;
+      }
+
+      final existingExchange = await FirebaseFirestore.instance
+          .collection('exchanges')
+          .where('bookTitle', isEqualTo: book.title)
+          .where('requesterId', isEqualTo: user.uid)
+          .get();
+
+      if (existingExchange.docs.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('This book is already in your exchanges')),
+        );
+        return;
+      }
+
+      await FirebaseFirestore.instance.collection('exchanges').add({
+        'bookTitle': book.title,
+        'bookAuthor': book.authorName,
+        'ownerId': book.userId,
+        'ownerName': book.ownerName,
+        'requesterId': user.uid,
+        'requesterName': user.displayName ?? 'Anonymous',
+        'status': 'pending',
+        'timestamp': FieldValue.serverTimestamp(),
+        'description': book.description,
+        'condition': book.condition,
+        'category': book.category,
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Book added to exchanges successfully!')),
+      );
+    } catch (e) {
+      print('Error adding to exchanges: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to add book to exchanges')),
+      );
+    }
   }
 
   Widget _getBody() {
