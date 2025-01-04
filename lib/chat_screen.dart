@@ -126,10 +126,13 @@ class _ChatScreenState extends State<ChatScreen> {
                 elevation: 2,
                 child: ListTile(
                   leading: CircleAvatar(
-                    backgroundColor: Colors.blue[100],
+                    backgroundColor: Color(0xFF1E88E5),
                     child: Text(
                       otherPerson[0].toUpperCase(),
-                      style: TextStyle(color: Colors.white),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   title: Text(
@@ -205,12 +208,14 @@ class MessageBubble extends StatelessWidget {
   final String sender;
   final String text;
   final DateTime timestamp;
+  final bool isMe;
 
   const MessageBubble({
     Key? key,
     required this.sender,
     required this.text,
     required this.timestamp,
+    required this.isMe,
   }) : super(key: key);
 
   @override
@@ -218,16 +223,18 @@ class MessageBubble extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment:
+            isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         children: [
-          Text(
-            sender,
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
-          ),
           Material(
             elevation: 2,
-            borderRadius: BorderRadius.circular(10),
-            color: Colors.blue[100],
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(12),
+              topRight: Radius.circular(12),
+              bottomLeft: isMe ? Radius.circular(12) : Radius.zero,
+              bottomRight: isMe ? Radius.zero : Radius.circular(12),
+            ),
+            color: isMe ? Color(0xFF1E88E5) : Colors.grey[200],
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
               child: Column(
@@ -235,12 +242,18 @@ class MessageBubble extends StatelessWidget {
                 children: [
                   Text(
                     text,
-                    style: const TextStyle(fontSize: 15),
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: isMe ? Colors.white : Colors.black87,
+                    ),
                   ),
-                  const SizedBox(height: 5),
+                  SizedBox(height: 5),
                   Text(
                     _formatTimestamp(timestamp),
-                    style: const TextStyle(fontSize: 10, color: Colors.grey),
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: isMe ? Colors.white70 : Colors.grey,
+                    ),
                   ),
                 ],
               ),

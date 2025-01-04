@@ -233,62 +233,42 @@ class MessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: const EdgeInsets.all(8.0),
       child: Column(
         crossAxisAlignment:
             isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
         children: [
-          Container(
-            constraints: BoxConstraints(
-              maxWidth: MediaQuery.of(context).size.width * 0.75,
+          Material(
+            elevation: 2,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(12),
+              topRight: Radius.circular(12),
+              bottomLeft: isMe ? Radius.circular(12) : Radius.zero,
+              bottomRight: isMe ? Radius.zero : Radius.circular(12),
             ),
-            decoration: BoxDecoration(
-              gradient: isMe
-                  ? LinearGradient(
-                      colors: [
-                        Color(0xFFE53935),
-                        Color(0xFF1E88E5),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    )
-                  : null,
-              color: isMe ? null : Colors.white,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(12),
-                topRight: Radius.circular(12),
-                bottomLeft: isMe ? Radius.circular(12) : Radius.zero,
-                bottomRight: isMe ? Radius.zero : Radius.circular(12),
+            color: isMe ? Color(0xFF1E88E5) : Colors.grey[200],
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    text,
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: isMe ? Colors.white : Colors.black87,
+                    ),
+                  ),
+                  SizedBox(height: 5),
+                  Text(
+                    _formatTimestamp(timestamp),
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: isMe ? Colors.white70 : Colors.grey,
+                    ),
+                  ),
+                ],
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 5,
-                  offset: Offset(0, 1),
-                ),
-              ],
-            ),
-            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            child: Column(
-              crossAxisAlignment:
-                  isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-              children: [
-                Text(
-                  text,
-                  style: TextStyle(
-                    color: isMe ? Colors.white : Colors.black87,
-                    fontSize: 15,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  _formatTimestamp(timestamp),
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: isMe ? Colors.white70 : Colors.grey[600],
-                  ),
-                ),
-              ],
             ),
           ),
         ],
