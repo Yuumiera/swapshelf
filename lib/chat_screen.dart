@@ -83,18 +83,34 @@ class _ChatScreenState extends State<ChatScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
-                            Icons.message_outlined,
-                            size: 80,
-                            color: Colors.grey[400],
+                          Container(
+                            width: 120,
+                            height: 120,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[100],
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.message_outlined,
+                              size: 60,
+                              color: Color(0xFF1E88E5),
+                            ),
                           ),
-                          SizedBox(height: 16),
+                          SizedBox(height: 24),
                           Text(
                             'Henüz mesajınız yok',
                             style: TextStyle(
-                              fontSize: 18,
-                              color: Colors.grey[600],
+                              fontSize: 20,
                               fontWeight: FontWeight.w500,
+                              color: Colors.grey[800],
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'Kitap sahipleriyle sohbet etmeye başlayın',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
                             ),
                           ),
                         ],
@@ -129,87 +145,129 @@ class _ChatScreenState extends State<ChatScreen> {
                     }
                   }
 
-                  return ListView.separated(
-                    padding: EdgeInsets.zero,
+                  return ListView.builder(
+                    padding: EdgeInsets.symmetric(vertical: 8),
                     itemCount: uniqueChats.length,
-                    separatorBuilder: (context, index) => Divider(
-                      height: 1,
-                      color: Colors.grey[200],
-                    ),
                     itemBuilder: (context, index) {
                       final otherPerson = uniqueChats.keys.elementAt(index);
                       final lastMessage = uniqueChats[otherPerson]!;
 
-                      return InkWell(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => MessageToPersonScreen(
-                                recipientName: otherPerson,
-                                currentUserName: _currentUserName!,
-                              ),
+                      return Container(
+                        margin:
+                            EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(15),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 10,
+                              spreadRadius: 1,
+                              offset: Offset(0, 2),
                             ),
-                          );
-                        },
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 12),
-                          child: Row(
-                            children: [
-                              CircleAvatar(
-                                radius: 28,
-                                backgroundColor: Color(0xFF1E88E5),
-                                child: Text(
-                                  otherPerson[0].toUpperCase(),
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
+                          ],
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(15),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => MessageToPersonScreen(
+                                    recipientName: otherPerson,
+                                    currentUserName: _currentUserName!,
                                   ),
                                 ),
-                              ),
-                              SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          otherPerson,
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16,
-                                          ),
+                              );
+                            },
+                            child: Padding(
+                              padding: EdgeInsets.all(12),
+                              child: Row(
+                                children: [
+                                  // Avatar
+                                  Container(
+                                    width: 60,
+                                    height: 60,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      gradient: LinearGradient(
+                                        colors: [
+                                          Color(0xFF1E88E5),
+                                          Color(0xFF1976D2)
+                                        ],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Color(0xFF1E88E5)
+                                              .withOpacity(0.3),
+                                          blurRadius: 8,
+                                          spreadRadius: 1,
+                                          offset: Offset(0, 2),
                                         ),
+                                      ],
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        otherPerson[0].toUpperCase(),
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: 16),
+                                  // Mesaj bilgileri
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              otherPerson,
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16,
+                                                color: Colors.black87,
+                                              ),
+                                            ),
+                                            Text(
+                                              _formatTimestamp(
+                                                  lastMessage['timestamp']
+                                                      as Timestamp?),
+                                              style: TextStyle(
+                                                color: Colors.grey[600],
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        SizedBox(height: 6),
                                         Text(
-                                          _formatTimestamp(
-                                              lastMessage['timestamp']
-                                                  as Timestamp?),
+                                          lastMessage['text'] ?? '',
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
                                           style: TextStyle(
-                                            color: Colors.grey[500],
-                                            fontSize: 12,
+                                            color: Colors.grey[600],
+                                            fontSize: 14,
+                                            height: 1.3,
                                           ),
                                         ),
                                       ],
                                     ),
-                                    SizedBox(height: 4),
-                                    Text(
-                                      lastMessage['text'] ?? '',
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: TextStyle(
-                                        color: Colors.grey[600],
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
-                            ],
+                            ),
                           ),
                         ),
                       );
