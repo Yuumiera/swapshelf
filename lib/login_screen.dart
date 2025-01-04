@@ -163,29 +163,38 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 SizedBox(height: screenHeight * 0.015),
                 // Email Giriş Alanı
-                TextField(
+                TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.next,
+                  style: TextStyle(color: Colors.white),
                   decoration: InputDecoration(
-                    labelText: 'Mail',
+                    labelText: 'Email',
                     labelStyle: TextStyle(color: Colors.white),
                     prefixIcon: Icon(Icons.email, color: Colors.white),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16.0),
-                      borderSide: BorderSide(color: Colors.white, width: 1.0),
+                      borderSide: BorderSide(color: Colors.white),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16.0),
-                      borderSide: BorderSide(color: Colors.white, width: 2.0),
+                      borderSide: BorderSide(color: Colors.white),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.red),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    focusedErrorBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.red),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                 ),
-                SizedBox(height: screenHeight * 0.015),
+                SizedBox(height: 16),
                 // Şifre Giriş Alanı
-                TextField(
+                TextFormField(
                   controller: _passwordController,
                   obscureText: _obscureText,
+                  style: TextStyle(color: Colors.white),
                   decoration: InputDecoration(
                     labelText: 'Password',
                     labelStyle: TextStyle(color: Colors.white),
@@ -202,12 +211,20 @@ class _LoginScreenState extends State<LoginScreen> {
                       },
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16.0),
-                      borderSide: BorderSide(color: Colors.white, width: 1.0),
+                      borderSide: BorderSide(color: Colors.white),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16.0),
-                      borderSide: BorderSide(color: Colors.white, width: 2.0),
+                      borderSide: BorderSide(color: Colors.white),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.red),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    focusedErrorBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.red),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                 ),
