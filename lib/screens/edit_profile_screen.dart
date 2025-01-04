@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
 
 class EditProfileScreen extends StatefulWidget {
   @override
@@ -15,7 +16,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _nameController;
   late TextEditingController _jobController;
   late TextEditingController _cityController;
+  late TextEditingController _phoneController;
+  late TextEditingController _dateController;
   String? _selectedGender;
+  DateTime? _selectedDate;
   bool _isLoading = false;
 
   @override
@@ -24,6 +28,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _nameController = TextEditingController();
     _jobController = TextEditingController();
     _cityController = TextEditingController();
+    _phoneController = TextEditingController();
+    _dateController = TextEditingController();
     _loadUserData();
   }
 
@@ -37,9 +43,30 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           _nameController.text = data['name'] ?? '';
           _jobController.text = data['job'] ?? '';
           _cityController.text = data['city'] ?? '';
+          _phoneController.text = data['phone'] ?? '';
           _selectedGender = data['gender'];
+          if (data['dateOfBirth'] != null) {
+            _selectedDate = (data['dateOfBirth'] as Timestamp).toDate();
+            _dateController.text =
+                DateFormat('dd/MM/yyyy').format(_selectedDate!);
+          }
         });
       }
+    }
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+        _dateController.text = DateFormat('dd/MM/yyyy').format(picked);
+      });
     }
   }
 
@@ -53,7 +80,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             'name': _nameController.text,
             'job': _jobController.text,
             'city': _cityController.text,
+            'phone': _phoneController.text,
             'gender': _selectedGender,
+            'dateOfBirth': _selectedDate != null
+                ? Timestamp.fromDate(_selectedDate!)
+                : null,
           });
           if (!mounted) return;
           Navigator.pop(context);
@@ -90,7 +121,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       controller: _nameController,
                       decoration: InputDecoration(
                         labelText: 'Name',
-                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.person),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -101,26 +135,38 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ),
                     SizedBox(height: 16),
                     TextFormField(
-                      controller: _jobController,
+                      controller: _phoneController,
                       decoration: InputDecoration(
-                        labelText: 'Job',
-                        border: OutlineInputBorder(),
+                        labelText: 'Phone Number',
+                        prefixIcon: Icon(Icons.phone),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
+                      keyboardType: TextInputType.phone,
                     ),
                     SizedBox(height: 16),
                     TextFormField(
-                      controller: _cityController,
+                      controller: _dateController,
                       decoration: InputDecoration(
-                        labelText: 'City',
-                        border: OutlineInputBorder(),
+                        labelText: 'Date of Birth',
+                        prefixIcon: Icon(Icons.calendar_today),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
+                      readOnly: true,
+                      onTap: () => _selectDate(context),
                     ),
                     SizedBox(height: 16),
                     DropdownButtonFormField<String>(
                       value: _selectedGender,
                       decoration: InputDecoration(
                         labelText: 'Gender',
-                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.people),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                       items: ['Male', 'Female', 'Other']
                           .map((gender) => DropdownMenuItem(
@@ -132,12 +178,37 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         setState(() => _selectedGender = value);
                       },
                     ),
+                    SizedBox(height: 16),
+                    TextFormField(
+                      controller: _jobController,
+                      decoration: InputDecoration(
+                        labelText: 'Job',
+                        prefixIcon: Icon(Icons.work),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                    TextFormField(
+                      controller: _cityController,
+                      decoration: InputDecoration(
+                        labelText: 'City',
+                        prefixIcon: Icon(Icons.location_city),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
                     SizedBox(height: 24),
                     ElevatedButton(
                       onPressed: _saveProfile,
                       child: Text('Save Changes'),
                       style: ElevatedButton.styleFrom(
                         minimumSize: Size(double.infinity, 50),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                     ),
                   ],
@@ -152,6 +223,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _nameController.dispose();
     _jobController.dispose();
     _cityController.dispose();
+    _phoneController.dispose();
+    _dateController.dispose();
     super.dispose();
   }
 }

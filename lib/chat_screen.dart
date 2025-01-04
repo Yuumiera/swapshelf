@@ -57,13 +57,19 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(title: Text("Sohbetler")),
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+        ),
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text("Sohbetler")),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
       body: StreamBuilder<QuerySnapshot>(
         stream: _getChatsStream(),
         builder: (context, snapshot) {
@@ -112,35 +118,49 @@ class _ChatScreenState extends State<ChatScreen> {
               final otherPerson = uniqueChats.keys.elementAt(index);
               final lastMessage = uniqueChats[otherPerson]!;
 
-              return ListTile(
-                leading: CircleAvatar(
-                  backgroundColor: Colors.blue[100],
-                  child: Text(otherPerson[0].toUpperCase()),
+              return Card(
+                margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                title: Text(otherPerson),
-                subtitle: Text(
-                  lastMessage['text'] ?? '',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                trailing: Text(
-                  _formatTimestamp(lastMessage['timestamp'] as Timestamp?),
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 12,
-                  ),
-                ),
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => MessageToPersonScreen(
-                        recipientName: otherPerson,
-                        currentUserName: _currentUserName!,
-                      ),
+                elevation: 2,
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: Colors.blue[100],
+                    child: Text(
+                      otherPerson[0].toUpperCase(),
+                      style: TextStyle(color: Colors.white),
                     ),
-                  );
-                },
+                  ),
+                  title: Text(
+                    otherPerson,
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(
+                    lastMessage['text'] ?? '',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
+                  trailing: Text(
+                    _formatTimestamp(lastMessage['timestamp'] as Timestamp?),
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 12,
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => MessageToPersonScreen(
+                          recipientName: otherPerson,
+                          currentUserName: _currentUserName!,
+                        ),
+                      ),
+                    );
+                  },
+                ),
               );
             },
           );

@@ -18,106 +18,175 @@ class MessageToPersonScreen extends StatefulWidget {
 
 class _MessageToPersonScreenState extends State<MessageToPersonScreen> {
   final TextEditingController _messageController = TextEditingController();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  bool _isFirstLoad = true;
-
-  Stream<QuerySnapshot> _getMessageStream() {
-    return _firestore
-        .collection('messages')
-        .where('sender', isEqualTo: widget.currentUserName)
-        .where('recipient', isEqualTo: widget.recipientName)
-        .orderBy('timestamp', descending: true)
-        .snapshots();
-  }
-
-  void _sendMessage() async {
-    final message = _messageController.text.trim();
-    if (message.isNotEmpty) {
-      try {
-        await _firestore.collection('messages').add({
-          'sender': widget.currentUserName,
-          'recipient': widget.recipientName,
-          'text': message,
-          'timestamp': FieldValue.serverTimestamp(),
-        });
-        _messageController.clear();
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Mesaj gönderilemedi: $e")),
-        );
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: Text("${widget.recipientName} ile Sohbet"),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Color(0xFFE53935),
+                Color(0xFF1E88E5),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios_new, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Row(
+          children: [
+            CircleAvatar(
+              backgroundColor: Colors.white,
+              child: Text(
+                widget.recipientName[0].toUpperCase(),
+                style: TextStyle(color: Colors.blue[900]),
+              ),
+            ),
+            SizedBox(width: 10),
+            Text(
+              widget.recipientName,
+              style: TextStyle(color: Colors.white),
+            ),
+          ],
+        ),
       ),
       body: Column(
         children: [
           Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: _getMessageStream(),
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  print('Stream error: ${snapshot.error}');
-                  return Center(
-                      child: Text('Bir hata oluştu: ${snapshot.error}'));
-                }
+            child: Container(
+              color: Colors.grey[50],
+              child: StreamBuilder<QuerySnapshot>(
+                stream: _firestore
+                    .collection('messages')
+                    .where(Filter.or(
+                      Filter.and(
+                        Filter('sender', isEqualTo: widget.currentUserName),
+                        Filter('recipient', isEqualTo: widget.recipientName),
+                      ),
+                      Filter.and(
+                        Filter('sender', isEqualTo: widget.recipientName),
+                        Filter('recipient', isEqualTo: widget.currentUserName),
+                      ),
+                    ))
+                    .orderBy('timestamp', descending: true)
+                    .snapshots(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData) {
+                    return Center(child: CircularProgressIndicator());
+                  }
 
-                if (!snapshot.hasData || snapshot.data == null) {
-                  return Center(child: CircularProgressIndicator());
-                }
+                  final messages = snapshot.data!.docs;
+                  List<MessageBubble> messageBubbles = [];
 
-                final messages = snapshot.data!.docs;
-                if (messages.isEmpty) {
-                  return Center(
-                      child: Text('Henüz mesaj yok. Sohbete başlayın!'));
-                }
-
-                return ListView.builder(
-                  reverse: true,
-                  itemCount: messages.length,
-                  itemBuilder: (context, index) {
+                  for (var message in messages) {
                     try {
-                      final message =
-                          messages[index].data() as Map<String, dynamic>;
-                      final isMe = message['sender'] == widget.currentUserName;
+                      final messageData =
+                          message.data() as Map<String, dynamic>;
 
-                      return MessageBubble(
-                        message: message['text'] ?? '',
-                        isMe: isMe,
-                        sender: message['sender'] ?? '',
-                        timestamp: message['timestamp'] as Timestamp?,
+                      // Tüm gerekli alanlar için null kontrolü
+                      if (messageData['text'] == null ||
+                          messageData['sender'] == null ||
+                          messageData['timestamp'] == null) {
+                        continue;
+                      }
+
+                      final messageText = messageData['text'] as String;
+                      final messageSender = messageData['sender'] as String;
+                      final messageTimestamp =
+                          messageData['timestamp'] as Timestamp;
+
+                      final messageBubble = MessageBubble(
+                        sender: messageSender,
+                        text: messageText,
+                        timestamp: messageTimestamp.toDate(),
+                        isMe: messageSender == widget.currentUserName,
                       );
+
+                      messageBubbles.add(messageBubble);
                     } catch (e) {
-                      print('Error rendering message at index $index: $e');
-                      return SizedBox.shrink();
+                      print('Error processing message: $e');
+                      continue;
                     }
-                  },
-                );
-              },
+                  }
+
+                  return ListView(
+                    reverse: true,
+                    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 20),
+                    children: messageBubbles,
+                  );
+                },
+              ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xFFE53935),
+                  Color(0xFF1E88E5),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             child: Row(
               children: [
                 Expanded(
-                  child: TextField(
-                    controller: _messageController,
-                    decoration: InputDecoration(
-                      hintText: "Mesajınızı yazın...",
-                      border: OutlineInputBorder(),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(25),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 4,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: TextField(
+                      controller: _messageController,
+                      decoration: InputDecoration(
+                        hintText: 'Type a message...',
+                        hintStyle: TextStyle(color: Colors.grey[500]),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 10,
+                        ),
+                      ),
                     ),
                   ),
                 ),
-                SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: _sendMessage,
-                  child: Text("Gönder"),
+                SizedBox(width: 12),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 4,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: IconButton(
+                    icon: Icon(Icons.send, color: Colors.blue, size: 24),
+                    onPressed: _sendMessage,
+                  ),
                 ),
               ],
             ),
@@ -126,58 +195,108 @@ class _MessageToPersonScreenState extends State<MessageToPersonScreen> {
       ),
     );
   }
+
+  void _sendMessage() {
+    if (_messageController.text.trim().isNotEmpty) {
+      try {
+        _firestore.collection('messages').add({
+          'text': _messageController.text.trim(),
+          'sender': widget.currentUserName,
+          'recipient': widget.recipientName,
+          'timestamp': FieldValue.serverTimestamp(),
+        });
+        _messageController.clear();
+      } catch (e) {
+        print('Error sending message: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to send message')),
+        );
+      }
+    }
+  }
 }
 
 class MessageBubble extends StatelessWidget {
-  final String message;
-  final bool isMe;
   final String sender;
-  final Timestamp? timestamp;
+  final String text;
+  final DateTime timestamp;
+  final bool isMe;
 
   const MessageBubble({
     Key? key,
-    required this.message,
-    required this.isMe,
     required this.sender,
-    this.timestamp,
+    required this.text,
+    required this.timestamp,
+    required this.isMe,
   }) : super(key: key);
-
-  String _formatTimestamp(Timestamp? timestamp) {
-    if (timestamp == null) return '';
-    final date = timestamp.toDate();
-    return '${date.hour}:${date.minute.toString().padLeft(2, '0')}';
-  }
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-      child: Align(
-        alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-        child: Container(
-          decoration: BoxDecoration(
-            color: isMe ? Colors.blue[100] : Colors.grey[300],
-            borderRadius: BorderRadius.circular(12),
-          ),
-          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          child: Column(
-            crossAxisAlignment:
-                isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-            children: [
-              Text(
-                sender,
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Column(
+        crossAxisAlignment:
+            isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+        children: [
+          Container(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width * 0.75,
+            ),
+            decoration: BoxDecoration(
+              gradient: isMe
+                  ? LinearGradient(
+                      colors: [
+                        Color(0xFFE53935),
+                        Color(0xFF1E88E5),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    )
+                  : null,
+              color: isMe ? null : Colors.white,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(12),
+                topRight: Radius.circular(12),
+                bottomLeft: isMe ? Radius.circular(12) : Radius.zero,
+                bottomRight: isMe ? Radius.zero : Radius.circular(12),
               ),
-              SizedBox(height: 4),
-              Text(message),
-              Text(
-                _formatTimestamp(timestamp),
-                style: TextStyle(fontSize: 10, color: Colors.grey[600]),
-              ),
-            ],
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 5,
+                  offset: Offset(0, 1),
+                ),
+              ],
+            ),
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: Column(
+              crossAxisAlignment:
+                  isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+              children: [
+                Text(
+                  text,
+                  style: TextStyle(
+                    color: isMe ? Colors.white : Colors.black87,
+                    fontSize: 15,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  _formatTimestamp(timestamp),
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: isMe ? Colors.white70 : Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
+  }
+
+  String _formatTimestamp(DateTime timestamp) {
+    return '${timestamp.hour}:${timestamp.minute.toString().padLeft(2, '0')} ${timestamp.day}/${timestamp.month}/${timestamp.year}';
   }
 }
