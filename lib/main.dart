@@ -1,63 +1,48 @@
 import 'package:flutter/material.dart';
-import 'splash_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'splash_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'home_screen.dart';
 import 'login_screen.dart';
-import 'package:geolocator/geolocator.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Firebase
+  // Firebase'i sadece bir kez başlat
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Request location permissions
-  await _initializeLocationService();
-
   runApp(SwapshelfApp());
 }
 
-Future<void> _initializeLocationService() async {
-  try {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      print('Location services are disabled.');
-      return;
-    }
-
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        print('Location permissions are denied');
-        return;
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      print('Location permissions are permanently denied');
-      return;
-    }
-  } catch (e) {
-    print('Error initializing location service: $e');
-  }
-}
-
 class SwapshelfApp extends StatelessWidget {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      title: 'SwapShelf',
       debugShowCheckedModeBanner: false,
-      title: 'Swapshelf',
       theme: ThemeData(
         primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: SplashScreen(),
-      routes: {
-        '/login': (context) => LoginScreen(),
-      },
+      home: StreamBuilder<User?>(
+        stream: _auth.authStateChanges(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return SplashScreen();
+          }
+
+          if (snapshot.hasData && snapshot.data != null) {
+            return HomeScreen();
+          }
+
+          return LoginScreen();
+        },
+      ),
     );
   }
 }

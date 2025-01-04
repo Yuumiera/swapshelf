@@ -1,8 +1,6 @@
-import 'package:firebase_core/firebase_core.dart'; // Firebase'i import et
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
-import 'package:flutter/widgets.dart';
-import 'package:swapshelfproje/main.dart'; // WidgetsFlutterBinding için gerekli
 
 /// Default [FirebaseOptions] for use with your Firebase apps.
 ///
@@ -27,7 +25,10 @@ class DefaultFirebaseOptions {
       case TargetPlatform.macOS:
         return macos;
       case TargetPlatform.windows:
-        return windows;
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for windows - '
+          'you can reconfigure this by running the FlutterFire CLI again.',
+        );
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -74,23 +75,4 @@ class DefaultFirebaseOptions {
     storageBucket: 'swapshelf-bdbf6.firebasestorage.app',
     iosBundleId: 'com.example.swapshelfproje',
   );
-
-  static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyAQJ1heIkwpyHQzrpPhuKfKs9YeaRCFwQA',
-    appId: '1:806131222747:web:ae68f25fd587ff8353e4fe',
-    messagingSenderId: '806131222747',
-    projectId: 'swapshelf-bdbf6',
-    authDomain: 'swapshelf-bdbf6.firebaseapp.com',
-    storageBucket: 'swapshelf-bdbf6.firebasestorage.app',
-  );
-}
-
-void main() async {
-  WidgetsFlutterBinding
-      .ensureInitialized(); // Flutter'ın başlatılmasını sağlar.
-  await Firebase.initializeApp(
-    // Firebase'i başlatır.
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  runApp(SwapshelfApp()); // const anahtar kelimesi kaldırıldı
 }

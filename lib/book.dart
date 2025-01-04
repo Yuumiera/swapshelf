@@ -4,51 +4,51 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class Book {
   final String id;
   final String title;
-  final String ownerName;
+  final String authorName;
   final String description;
-  final String tradeDate;
   final String condition;
   final String category;
-  final String authorName;
-  final String? userId;
+  final String ownerName;
+  final String userId;
+  final String? imageUrl;
 
   Book({
     required this.id,
     required this.title,
-    required this.ownerName,
+    required this.authorName,
     required this.description,
-    required this.tradeDate,
     required this.condition,
     required this.category,
-    required this.authorName,
-    this.userId,
+    required this.ownerName,
+    required this.userId,
+    this.imageUrl,
   });
 
   Map<String, dynamic> toJson() {
     return {
       'title': title,
-      'ownerName': ownerName,
+      'authorName': authorName,
       'description': description,
-      'tradeDate': tradeDate,
       'condition': condition,
       'category': category,
-      'authorName': authorName,
+      'ownerName': ownerName,
       'userId': userId,
-      'timestamp': FieldValue.serverTimestamp(), // Firebase timestamp için
+      'imageUrl': imageUrl,
+      'timestamp': FieldValue.serverTimestamp(),
     };
   }
 
-  static Book fromJson(Map<String, dynamic> json, {String? id}) {
+  factory Book.fromJson(Map<String, dynamic> json, {String? id}) {
     return Book(
       id: id ?? 'unknown',
       title: json['title'] ?? 'Unknown Book',
-      ownerName: json['ownerName'] ?? 'Unknown Owner',
+      authorName: json['authorName'] ?? 'Unknown Author',
       description: json['description'] ?? 'No description',
-      tradeDate: json['tradeDate'] ?? 'No date',
       condition: json['condition'] ?? 'Unknown',
       category: json['category'] ?? 'Other',
-      authorName: json['authorName'] ?? 'Unknown Author',
-      userId: json['userId'],
+      ownerName: json['ownerName'] ?? 'Unknown Owner',
+      userId: json['userId'] ?? '',
+      imageUrl: json['imageUrl'],
     );
   }
 }

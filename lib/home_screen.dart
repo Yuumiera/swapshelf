@@ -9,6 +9,7 @@ import 'widgets/book_detail_page.dart';
 import 'chat_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'map_screen.dart';
+import 'dart:convert';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -59,51 +60,76 @@ class _HomeScreenState extends State<HomeScreen> {
           itemCount: books.length,
           itemBuilder: (context, index) {
             final book = books[index];
-            return GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => BookDetailPage(book: book),
-                  ),
-                );
-              },
-              child: Card(
-                elevation: 6,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12.0),
-                ),
+            return Card(
+              elevation: 6,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12.0),
+              ),
+              child: InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => BookDetailPage(book: book),
+                    ),
+                  );
+                },
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
+                    if (book.imageUrl != null)
+                      Expanded(
+                        flex: 2,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius:
+                                BorderRadius.vertical(top: Radius.circular(12)),
+                            image: DecorationImage(
+                              image: book.imageUrl!.startsWith('data:image')
+                                  ? MemoryImage(base64Decode(
+                                      book.imageUrl!.split(',')[1]))
+                                  : NetworkImage(book.imageUrl!)
+                                      as ImageProvider,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                      ),
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             book.title,
                             style: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold),
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            book.authorName,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[800],
+                              fontStyle: FontStyle.italic,
+                            ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                           SizedBox(height: 4),
                           Text(
                             'Owner: ${book.ownerName}',
-                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ],
-                      ),
-                    ),
-                    Spacer(),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: ElevatedButton(
-                        onPressed: () => _addToExchanges(book),
-                        child: Text('Exchange'),
                       ),
                     ),
                   ],
@@ -188,10 +214,27 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  String _getTitle() {
+    switch (_currentIndex) {
+      case 0:
+        return 'Map';
+      case 1:
+        return 'Exchanges';
+      case 2:
+        return 'Home';
+      case 3:
+        return 'Messages';
+      case 4:
+        return 'Profile';
+      default:
+        return 'Home';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: GradientAppBar(title: 'Home'),
+      appBar: GradientAppBar(title: _getTitle()),
       body: SafeArea(child: _getBody()),
       bottomNavigationBar: GradientBottomNavigationBar(
         currentIndex: _currentIndex,

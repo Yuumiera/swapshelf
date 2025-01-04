@@ -62,16 +62,16 @@ class _BookAddFormState extends State<BookAddForm> {
           id: DateTime.now().millisecondsSinceEpoch.toString(),
           title: _titleController.text.trim(),
           authorName: _authorController.text.trim(),
-          ownerName: _currentUserName!,
           description: _descriptionController.text.trim(),
-          tradeDate: DateTime.now().toString(),
           condition: _conditionController.text.trim().isNotEmpty
               ? _conditionController.text.trim()
               : 'New',
           category: _categoryController.text.trim().isNotEmpty
               ? _categoryController.text.trim()
               : 'General',
-          userId: _auth.currentUser?.uid,
+          ownerName: _currentUserName!,
+          userId: _auth.currentUser?.uid ?? '',
+          imageUrl: null,
         );
 
         await _firestore.collection('library_books').add(book.toJson());

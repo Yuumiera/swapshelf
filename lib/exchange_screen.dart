@@ -15,83 +15,32 @@ class ExchangeScreen extends StatelessWidget {
     }
 
     return DefaultTabController(
-      length: 3,
+      length: 2,
       child: Scaffold(
         appBar: AppBar(
           bottom: TabBar(
             tabs: [
-              Tab(text: 'Available Books'),
               Tab(text: 'My Requests'),
               Tab(text: 'Incoming Requests'),
             ],
           ),
+          flexibleSpace: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.red, Colors.blue],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+          ),
         ),
         body: TabBarView(
           children: [
-            _buildAvailableBooks(currentUser),
             _buildMyRequests(currentUser),
             _buildIncomingRequests(currentUser),
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildAvailableBooks(User currentUser) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: _firestore
-          .collection('library_books')
-          .where('userId', isNotEqualTo: currentUser.uid)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.hasError) {
-          print('Error: ${snapshot.error}');
-          return Center(child: Text('An error occurred'));
-        }
-
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
-        }
-
-        final books = snapshot.data?.docs ?? [];
-
-        if (books.isEmpty) {
-          return Center(child: Text('No books available for exchange'));
-        }
-
-        return ListView.builder(
-          itemCount: books.length,
-          itemBuilder: (context, index) {
-            final bookData = books[index].data() as Map<String, dynamic>;
-            return Card(
-              margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: ListTile(
-                title: Text(
-                  bookData['title'] ?? 'Unknown Book',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                        'Author: ${bookData['authorName'] ?? 'Unknown Author'}'),
-                    Text('Owner: ${bookData['ownerName'] ?? 'Unknown Owner'}'),
-                    Text('Condition: ${bookData['condition'] ?? 'Unknown'}'),
-                    Text('Category: ${bookData['category'] ?? 'Unknown'}'),
-                    if (bookData['description'] != null)
-                      Text('Description: ${bookData['description']}'),
-                  ],
-                ),
-                trailing: ElevatedButton(
-                  onPressed: () =>
-                      _sendExchangeRequest(context, bookData, currentUser),
-                  child: Text('Request Exchange'),
-                ),
-              ),
-            );
-          },
-        );
-      },
     );
   }
 
@@ -367,59 +316,6 @@ class ExchangeScreen extends StatelessWidget {
         );
       },
     );
-  }
-
-  Future<void> _sendExchangeRequest(
-    BuildContext context,
-    Map<String, dynamic> bookData,
-    User currentUser,
-  ) async {
-    try {
-      // Önce kullanıcının adını Firestore'dan al
-      final userDoc =
-          await _firestore.collection('users').doc(currentUser.uid).get();
-
-      final requesterName =
-          userDoc.data()?['name'] ?? currentUser.email ?? 'Unknown User';
-
-      // Takas isteği zaten var mı kontrol et
-      final existingRequest = await _firestore
-          .collection('exchanges')
-          .where('bookTitle', isEqualTo: bookData['title'])
-          .where('requesterId', isEqualTo: currentUser.uid)
-          .get();
-
-      if (existingRequest.docs.isNotEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('You already requested this book')),
-        );
-        return;
-      }
-
-      // Yeni takas isteği oluştur
-      await _firestore.collection('exchanges').add({
-        'bookTitle': bookData['title'],
-        'bookAuthor': bookData['authorName'],
-        'ownerId': bookData['userId'],
-        'ownerName': bookData['ownerName'],
-        'requesterId': currentUser.uid,
-        'requesterName': requesterName,
-        'status': 'pending',
-        'timestamp': FieldValue.serverTimestamp(),
-        'description': bookData['description'],
-        'condition': bookData['condition'],
-        'category': bookData['category'],
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Exchange request sent successfully!')),
-      );
-    } catch (e) {
-      print('Error sending exchange request: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to send exchange request')),
-      );
-    }
   }
 
   Future<void> _updateExchangeStatus(

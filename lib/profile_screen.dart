@@ -8,8 +8,13 @@ import 'package:swapshelfproje/widgets/custom_background.dart';
 import 'library_screen.dart';
 import 'firebase/auth_service.dart';
 import 'past_exchanges_screen.dart';
+import 'widgets/user_avatar.dart';
 
 class ProfileScreen extends StatefulWidget {
+  final String? userId;
+
+  const ProfileScreen({Key? key, this.userId}) : super(key: key);
+
   @override
   _ProfileScreenState createState() => _ProfileScreenState();
 }
@@ -17,61 +22,42 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
-  Map<String, dynamic>? _userData;
+  bool _isUpdatingAge = false;
 
-  @override
-  void initState() {
-    super.initState();
-    _fetchUserData();
+  Stream<DocumentSnapshot> _getUserStream() {
+    String uid = widget.userId ?? _auth.currentUser?.uid ?? '';
+    return FirebaseFirestore.instance.collection('users').doc(uid).snapshots();
   }
 
-  // Kullanıcı verilerini Firestore'dan alır
-  Future<void> _fetchUserData() async {
+  Future<void> _updateAge(Map<String, dynamic> data, String uid) async {
+    if (_isUpdatingAge) return;
+
     try {
-      User? currentUser = _auth.currentUser;
-      if (currentUser != null) {
-        DocumentSnapshot userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(currentUser.uid)
-            .get();
+      _isUpdatingAge = true;
+      if (data['dateOfBirth'] != null) {
+        final birthDateTimestamp = data['dateOfBirth'] as Timestamp;
+        final birthDate = birthDateTimestamp.toDate();
+        final currentAge = AuthService.calculateAge(birthDate);
 
-        if (userDoc.exists) {
-          var data = userDoc.data();
-          if (data != null && data is Map<String, dynamic>) {
-            // Doğum tarihinden yaşı hesapla
-            if (data['dateOfBirth'] != null) {
-              Timestamp birthDateTimestamp = data['dateOfBirth'];
-              DateTime birthDate = birthDateTimestamp.toDate();
-              int currentAge = AuthService.calculateAge(birthDate);
-
-              // Yaşı güncelle
-              await FirebaseFirestore.instance
-                  .collection('users')
-                  .doc(currentUser.uid)
-                  .update({'age': currentAge});
-
-              data['age'] = currentAge;
-            }
-
-            setState(() {
-              _userData = data;
-            });
-          } else {
-            print('User data is not in expected format');
-          }
+        if (data['age'] != currentAge &&
+            (widget.userId == null ||
+                widget.userId == _auth.currentUser?.uid)) {
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(uid)
+              .update({'age': currentAge});
         }
       }
-    } catch (e) {
-      print('Error fetching user data: $e');
+    } finally {
+      _isUpdatingAge = false;
     }
   }
 
-  // Çıkış yapma işlemi
   Future<void> _signOut(BuildContext context) async {
     try {
       await _auth.signOut();
       await _googleSignIn.signOut();
-      print('Logout successful');
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => LoginScreen()),
@@ -83,65 +69,85 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    bool isOwnProfile =
+        widget.userId == null || widget.userId == _auth.currentUser?.uid;
+
     return Scaffold(
       body: CustomBackground(
         child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.all(0),
-            child: Container(
-              color: Colors.white,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (_userData != null) ...[
-                    Center(
+          child: StreamBuilder<DocumentSnapshot>(
+            stream: _getUserStream(),
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return Center(child: Text('Error loading profile'));
+              }
+
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return Center(child: CircularProgressIndicator());
+              }
+
+              if (!snapshot.hasData || !snapshot.data!.exists) {
+                return Center(child: Text('No profile data found'));
+              }
+
+              final userData = snapshot.data!.data() as Map<String, dynamic>;
+
+              Future.microtask(() => _updateAge(userData, snapshot.data!.id));
+
+              return Container(
+                color: Colors.white,
+                child: Column(
+                  children: [
+                    Container(
+                      padding: EdgeInsets.all(16),
+                      width: double.infinity,
                       child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          SizedBox(height: 16),
-                          Text(
-                            _userData?['name'] ?? 'Full Name',
-                            style: TextStyle(
-                                fontSize: 24, fontWeight: FontWeight.bold),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Age: ${_userData?['age'] ?? 'Unknown'}',
-                            style: TextStyle(
-                                fontSize: 16,
-                                color: const Color.fromARGB(255, 0, 0, 0)),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Job: ${_userData?['job'] ?? 'Unknown'}',
-                            style: TextStyle(
-                                fontSize: 16,
-                                color: const Color.fromARGB(255, 0, 0, 0)),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            'City: ${_userData?['city'] ?? 'Unknown'}',
-                            style: TextStyle(
-                                fontSize: 16,
-                                color: const Color.fromARGB(255, 0, 0, 0)),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Gender: ${_userData?['gender'] ?? 'Unknown'}',
-                            style: TextStyle(
-                                fontSize: 16,
-                                color: const Color.fromARGB(255, 2, 2, 2)),
-                          ),
-                          SizedBox(height: 4),
-                          Text(
-                            'Email: ${_userData?['email'] ?? 'example@example.com'}',
-                            style: TextStyle(
-                                fontSize: 16,
-                                color: const Color.fromARGB(255, 0, 0, 0)),
+                          UserAvatar(
+                            userId: widget.userId ?? _auth.currentUser!.uid,
+                            size: 120,
                           ),
                           SizedBox(height: 16),
+                          Text(
+                            userData['name'] ?? 'User',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            userData['email'] ?? '',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey[600],
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          SizedBox(height: 16),
+                          Container(
+                            padding: EdgeInsets.symmetric(horizontal: 20),
+                            child: Column(
+                              children: [
+                                _buildInfoRow('Age',
+                                    userData['age']?.toString() ?? 'N/A'),
+                                SizedBox(height: 8),
+                                _buildInfoRow('Job', userData['job'] ?? 'N/A'),
+                                SizedBox(height: 8),
+                                _buildInfoRow(
+                                    'City', userData['city'] ?? 'N/A'),
+                                SizedBox(height: 8),
+                                _buildInfoRow(
+                                    'Gender', userData['gender'] ?? 'N/A'),
+                              ],
+                            ),
+                          ),
                         ],
                       ),
                     ),
+                    Divider(thickness: 1),
                     Spacer(),
                     Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -198,31 +204,51 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
                         ),
-                        SizedBox(height: 24),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            onPressed: () => _signOut(context),
-                            icon: Icon(Icons.logout),
-                            label: Text('Logout'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red,
-                              padding: EdgeInsets.symmetric(vertical: 14),
+                        if (isOwnProfile) ...[
+                          SizedBox(height: 24),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: () => _signOut(context),
+                              icon: Icon(Icons.logout),
+                              label: Text('Logout'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                                padding: EdgeInsets.symmetric(vertical: 14),
+                              ),
                             ),
                           ),
-                        ),
+                        ],
                       ],
                     ),
-                  ] else
-                    Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                ],
-              ),
-            ),
+                  ],
+                ),
+              );
+            },
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          '$label: ',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 16,
+          ),
+        ),
+      ],
     );
   }
 }
