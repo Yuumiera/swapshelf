@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:swapshelfproje/message_to_person.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:swapshelfproje/message_to_person_screen.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({Key? key}) : super(key: key);
@@ -48,10 +48,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
     return _firestore
         .collection('messages')
-        .where(Filter.or(
-          Filter('sender', isEqualTo: _currentUserName),
-          Filter('recipient', isEqualTo: _currentUserName),
-        ))
+        .where('sender', isEqualTo: _currentUserName)
         .orderBy('timestamp', descending: true)
         .snapshots();
   }
@@ -60,19 +57,19 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(title: Text("Chats")),
+        appBar: AppBar(title: Text("Sohbetler")),
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text("Chats")),
+      appBar: AppBar(title: Text("Sohbetler")),
       body: StreamBuilder<QuerySnapshot>(
         stream: _getChatsStream(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             print('Stream error: ${snapshot.error}');
-            return Center(child: Text('An error occurred: ${snapshot.error}'));
+            return Center(child: Text('Bir hata oluştu: ${snapshot.error}'));
           }
 
           if (!snapshot.hasData || snapshot.data == null) {
@@ -81,7 +78,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
           final docs = snapshot.data!.docs;
           if (docs.isEmpty) {
-            return Center(child: Text('No messages yet'));
+            return Center(child: Text('Henüz mesajınız yok'));
           }
 
           Map<String, Map<String, dynamic>> uniqueChats = {};
@@ -164,17 +161,17 @@ class _ChatScreenState extends State<ChatScreen> {
       return '${date.hour}:${date.minute.toString().padLeft(2, '0')}';
     } else if (difference.inDays == 1) {
       // Dün ise
-      return 'Yesterday';
+      return 'Dün';
     } else if (difference.inDays < 7) {
       // Son 7 gün içinde ise gün adını göster
       final weekDays = [
-        'Monday',
-        'Tuesday',
-        'Wednesday',
-        'Thursday',
-        'Friday',
-        'Saturday',
-        'Sunday'
+        'Pazartesi',
+        'Salı',
+        'Çarşamba',
+        'Perşembe',
+        'Cuma',
+        'Cumartesi',
+        'Pazar'
       ];
       return weekDays[date.weekday - 1];
     } else {

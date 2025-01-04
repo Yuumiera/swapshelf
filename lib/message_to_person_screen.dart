@@ -24,16 +24,8 @@ class _MessageToPersonScreenState extends State<MessageToPersonScreen> {
   Stream<QuerySnapshot> _getMessageStream() {
     return _firestore
         .collection('messages')
-        .where(Filter.or(
-          Filter.and(
-            Filter('sender', isEqualTo: widget.currentUserName),
-            Filter('recipient', isEqualTo: widget.recipientName),
-          ),
-          Filter.and(
-            Filter('sender', isEqualTo: widget.recipientName),
-            Filter('recipient', isEqualTo: widget.currentUserName),
-          ),
-        ))
+        .where('sender', isEqualTo: widget.currentUserName)
+        .where('recipient', isEqualTo: widget.recipientName)
         .orderBy('timestamp', descending: true)
         .snapshots();
   }
@@ -61,7 +53,7 @@ class _MessageToPersonScreenState extends State<MessageToPersonScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Chat with ${widget.recipientName}"),
+        title: Text("${widget.recipientName} ile Sohbet"),
       ),
       body: Column(
         children: [
@@ -72,7 +64,7 @@ class _MessageToPersonScreenState extends State<MessageToPersonScreen> {
                 if (snapshot.hasError) {
                   print('Stream error: ${snapshot.error}');
                   return Center(
-                      child: Text('An error occurred: ${snapshot.error}'));
+                      child: Text('Bir hata oluştu: ${snapshot.error}'));
                 }
 
                 if (!snapshot.hasData || snapshot.data == null) {
@@ -82,7 +74,7 @@ class _MessageToPersonScreenState extends State<MessageToPersonScreen> {
                 final messages = snapshot.data!.docs;
                 if (messages.isEmpty) {
                   return Center(
-                      child: Text('No messages yet. Start chatting!'));
+                      child: Text('Henüz mesaj yok. Sohbete başlayın!'));
                 }
 
                 return ListView.builder(
@@ -117,7 +109,7 @@ class _MessageToPersonScreenState extends State<MessageToPersonScreen> {
                   child: TextField(
                     controller: _messageController,
                     decoration: InputDecoration(
-                      hintText: "Type your message...",
+                      hintText: "Mesajınızı yazın...",
                       border: OutlineInputBorder(),
                     ),
                   ),
@@ -125,7 +117,7 @@ class _MessageToPersonScreenState extends State<MessageToPersonScreen> {
                 SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: _sendMessage,
-                  child: Text("Send"),
+                  child: Text("Gönder"),
                 ),
               ],
             ),
