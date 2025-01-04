@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'screens/edit_profile_screen.dart';
 import 'screens/language_settings_screen.dart';
+import 'screens/change_password_screen.dart';
+import 'screens/location_services_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   @override
@@ -62,7 +64,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 title: 'Change Password',
                 color: Color(0xFF43A047),
                 onTap: () {
-                  // Şifre değiştirme işlevi
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => ChangePasswordScreen()),
+                  );
                 },
               ),
             ],
@@ -76,9 +82,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 title: 'Push Notifications',
                 color: Color(0xFF7E57C2),
                 trailing: Switch(
-                  value: true, // Değeri state'den alın
+                  value: true,
                   onChanged: (value) {
                     // Switch değişim işlevi
+                  },
+                  activeColor: Color(0xFF7E57C2),
+                ),
+              ),
+              _buildSettingTile(
+                icon: Icons.email,
+                title: 'Email Notifications',
+                color: Color(0xFF7E57C2),
+                trailing: Switch(
+                  value: false,
+                  onChanged: (value) {
+                    // Email bildirimleri değişim işlevi
                   },
                   activeColor: Color(0xFF7E57C2),
                 ),
@@ -94,7 +112,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 title: 'Location Services',
                 color: Color(0xFFEF5350),
                 onTap: () {
-                  // Konum ayarları işlevi
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => LocationServicesScreen()),
+                  );
                 },
               ),
               _buildSettingTile(
@@ -103,6 +125,83 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 color: Color(0xFFFF7043),
                 onTap: () {
                   // Profil görünürlüğü işlevi
+                },
+              ),
+              _buildSettingTile(
+                icon: Icons.block,
+                title: 'Blocked Users',
+                color: Color(0xFFEF5350),
+                onTap: () {
+                  // Engellenen kullanıcılar işlevi
+                },
+              ),
+            ],
+          ),
+          SizedBox(height: 24),
+          _buildSection(
+            'App Settings',
+            [
+              _buildSettingTile(
+                icon: Icons.language,
+                title: 'Language',
+                color: Color(0xFF1E88E5),
+                trailing: Text('English'),
+                onTap: () {
+                  // Dil seçimi işlevi
+                },
+              ),
+              _buildSettingTile(
+                icon: Icons.dark_mode,
+                title: 'Dark Mode',
+                color: Color(0xFF5E35B1),
+                trailing: Switch(
+                  value: false,
+                  onChanged: (value) {
+                    // Karanlık mod değişim işlevi
+                  },
+                  activeColor: Color(0xFF5E35B1),
+                ),
+              ),
+              _buildSettingTile(
+                icon: Icons.notifications_active,
+                title: 'Sound Effects',
+                color: Color(0xFF00897B),
+                trailing: Switch(
+                  value: true,
+                  onChanged: (value) {
+                    // Ses efektleri değişim işlevi
+                  },
+                  activeColor: Color(0xFF00897B),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 24),
+          _buildSection(
+            'Support',
+            [
+              _buildSettingTile(
+                icon: Icons.help_outline,
+                title: 'Help Center',
+                color: Color(0xFF546E7A),
+                onTap: () {
+                  // Yardım merkezi işlevi
+                },
+              ),
+              _buildSettingTile(
+                icon: Icons.feedback,
+                title: 'Send Feedback',
+                color: Color(0xFF546E7A),
+                onTap: () {
+                  // Geri bildirim gönderme işlevi
+                },
+              ),
+              _buildSettingTile(
+                icon: Icons.info_outline,
+                title: 'About',
+                color: Color(0xFF546E7A),
+                onTap: () {
+                  // Uygulama hakkında işlevi
                 },
               ),
             ],
