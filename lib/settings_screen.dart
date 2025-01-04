@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'screens/edit_profile_screen.dart';
+import 'screens/language_settings_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   @override
@@ -60,7 +61,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             subtitle: Text('Change app language'),
             trailing: Icon(Icons.arrow_forward_ios),
             onTap: () {
-              // Dil ayarları sayfasına yönlendir
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => LanguageSettingsScreen()),
+              );
             },
           ),
           Divider(),
