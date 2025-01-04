@@ -9,6 +9,7 @@ import 'library_screen.dart';
 import 'firebase/auth_service.dart';
 import 'past_exchanges_screen.dart';
 import 'widgets/user_avatar.dart';
+import 'settings_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String? userId;
@@ -73,6 +74,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
         widget.userId == null || widget.userId == _auth.currentUser?.uid;
 
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          if (isOwnProfile)
+            IconButton(
+              icon: Icon(Icons.settings),
+              onPressed: () {
+                _showSettings(context);
+              },
+            ),
+        ],
+      ),
       body: CustomBackground(
         child: SafeArea(
           child: StreamBuilder<DocumentSnapshot>(
@@ -104,41 +118,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          UserAvatar(
-                            userId: widget.userId ?? _auth.currentUser!.uid,
-                            size: 120,
+                          Stack(
+                            children: [
+                              UserAvatar(
+                                userId: widget.userId ?? _auth.currentUser!.uid,
+                                size: 120,
+                              ),
+                            ],
                           ),
-                          SizedBox(height: 16),
+                          SizedBox(height: 12),
                           Text(
                             userData['name'] ?? 'User',
                             style: TextStyle(
-                              fontSize: 24,
+                              fontSize: 22,
                               fontWeight: FontWeight.bold,
                             ),
                             textAlign: TextAlign.center,
                           ),
-                          SizedBox(height: 8),
+                          SizedBox(height: 6),
                           Text(
                             userData['email'] ?? '',
                             style: TextStyle(
-                              fontSize: 16,
+                              fontSize: 14,
                               color: Colors.grey[600],
                             ),
                             textAlign: TextAlign.center,
                           ),
-                          SizedBox(height: 16),
+                          SizedBox(height: 12),
                           Container(
                             padding: EdgeInsets.symmetric(horizontal: 20),
                             child: Column(
                               children: [
                                 _buildInfoRow('Age',
                                     userData['age']?.toString() ?? 'N/A'),
-                                SizedBox(height: 8),
+                                SizedBox(height: 6),
                                 _buildInfoRow('Job', userData['job'] ?? 'N/A'),
-                                SizedBox(height: 8),
+                                SizedBox(height: 6),
                                 _buildInfoRow(
                                     'City', userData['city'] ?? 'N/A'),
-                                SizedBox(height: 8),
+                                SizedBox(height: 6),
                                 _buildInfoRow(
                                     'Gender', userData['gender'] ?? 'N/A'),
                               ],
@@ -249,6 +267,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  void _showSettings(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SettingsScreen(),
+      ),
     );
   }
 }
