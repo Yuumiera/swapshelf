@@ -18,6 +18,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   String? _currentUserName;
   File? selectedImage;
+  String? imageBase64;
 
   final List<String> _conditions = ['New', 'Like New', 'Good', 'Fair', 'Poor'];
   final List<String> _categories = [
@@ -48,53 +49,86 @@ class _LibraryScreenState extends State<LibraryScreen> {
     }
   }
 
-  Future<void> _checkAndRequestPermissions() async {
+  Future<bool> _checkAndRequestPermissions() async {
     if (Platform.isAndroid) {
-      if (await Permission.storage.status.isDenied ||
-          await Permission.photos.status.isDenied ||
-          await Permission.camera.status.isDenied) {
-        await [
-          Permission.storage,
-          Permission.photos,
-          Permission.camera,
-          Permission.mediaLibrary,
-        ].request();
-      }
+      // Android 13 ve üzeri için API seviyesini kontrol et
+      final androidInfo = await DeviceInfoPlugin().androidInfo;
+      final androidVersion = int.parse(androidInfo.version.release);
 
-      // Android 13+ için özel izinler
-      if (int.parse(await DeviceInfoPlugin()
-              .androidInfo
-              .then((value) => value.version.release)) >=
-          13) {
-        await Permission.photos.request();
-        await Permission.videos.request();
-        await Permission.audio.request();
+      if (androidVersion >= 13) {
+        // Android 13+ için özel izinler
+        final photos = await Permission.photos.request();
+        final videos = await Permission.videos.request();
+
+        if (photos.isDenied || videos.isDenied) {
+          _showPermissionDialog();
+          return false;
+        }
+      } else {
+        // Android 13 öncesi için izinler
+        final storage = await Permission.storage.request();
+        final camera = await Permission.camera.request();
+
+        if (storage.isDenied || camera.isDenied) {
+          _showPermissionDialog();
+          return false;
+        }
       }
+      return true;
     }
+    return true;
   }
 
-  Future<void> _pickImage(ImageSource source, StateSetter setState) async {
-    try {
-      await _checkAndRequestPermissions(); // İzinleri kontrol et
+  void _showPermissionDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('İzin Gerekli'),
+        content: Text(
+            'Resim ekleyebilmek için gerekli izinleri vermeniz gerekmektedir.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('İptal'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              await openAppSettings();
+            },
+            child: Text('Ayarları Aç'),
+          ),
+        ],
+      ),
+    );
+  }
 
-      final picker = ImagePicker();
-      final XFile? pickedFile = await picker.pickImage(
-        source: source,
+  Future<void> _pickImage(StateSetter setState) async {
+    try {
+      final hasPermission = await _checkAndRequestPermissions();
+      if (!hasPermission) return;
+
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
         maxWidth: 1024,
         maxHeight: 1024,
         imageQuality: 80,
       );
 
-      if (pickedFile != null) {
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+        final base64Image = 'data:image/jpeg;base64,${base64Encode(bytes)}';
         setState(() {
-          selectedImage = File(pickedFile.path);
+          selectedImage = File(image.path);
+          imageBase64 = base64Image;
         });
       }
     } catch (e) {
       print('Error picking image: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to pick image: $e')),
+        SnackBar(content: Text('Resim seçilirken bir hata oluştu')),
       );
     }
   }
@@ -107,6 +141,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
     String selectedCondition = _conditions[0];
     String selectedCategory = _categories[0];
     selectedImage = null;
+    imageBase64 = null;
 
     return showDialog(
       context: context,
@@ -117,89 +152,27 @@ class _LibraryScreenState extends State<LibraryScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (selectedImage != null)
+                // Resim seçme butonu
+                ElevatedButton.icon(
+                  onPressed: () => _pickImage(setState),
+                  icon: Icon(Icons.photo_library),
+                  label: Text('Select Image'),
+                ),
+                if (selectedImage != null) ...[
+                  SizedBox(height: 10),
                   Container(
                     height: 150,
                     width: 150,
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(4),
-                      image: DecorationImage(
-                        image: FileImage(selectedImage!),
-                        fit: BoxFit.cover,
-                      ),
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Image.file(
+                      selectedImage!,
+                      fit: BoxFit.cover,
                     ),
                   ),
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    try {
-                      // Önce izinleri kontrol et
-                      Map<Permission, PermissionStatus> statuses = await [
-                        Permission.storage,
-                        Permission.photos,
-                        Permission.camera,
-                      ].request();
-
-                      bool allGranted = true;
-                      statuses.forEach((permission, status) {
-                        if (!status.isGranted) allGranted = false;
-                      });
-
-                      if (allGranted) {
-                        final picker = ImagePicker();
-                        // Fotoğraf seçme dialogu göster
-                        showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return AlertDialog(
-                              title: Text('Select Image Source'),
-                              content: SingleChildScrollView(
-                                child: ListBody(
-                                  children: <Widget>[
-                                    GestureDetector(
-                                      child: Text('Gallery'),
-                                      onTap: () {
-                                        Navigator.pop(context);
-                                        _pickImage(
-                                            ImageSource.gallery, setState);
-                                      },
-                                    ),
-                                    Padding(padding: EdgeInsets.all(8.0)),
-                                    GestureDetector(
-                                      child: Text('Camera'),
-                                      onTap: () {
-                                        Navigator.pop(context);
-                                        _pickImage(
-                                            ImageSource.camera, setState);
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        );
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content:
-                                Text('Please grant all required permissions'),
-                            action: SnackBarAction(
-                              label: 'Settings',
-                              onPressed: () => openAppSettings(),
-                            ),
-                          ),
-                        );
-                      }
-                    } catch (e) {
-                      print('Error picking image: $e');
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Failed to pick image: $e')),
-                      );
-                    }
-                  },
-                  icon: Icon(Icons.photo_library),
-                  label: Text('Select Image'),
-                ),
+                ],
                 SizedBox(height: 16),
                 TextField(
                   controller: titleController,
@@ -279,30 +252,29 @@ class _LibraryScreenState extends State<LibraryScreen> {
             ),
             ElevatedButton(
               onPressed: () async {
-                if (titleController.text.isNotEmpty) {
-                  String? imageUrl;
-                  if (selectedImage != null) {
-                    // Resmi base64'e çevir
-                    final bytes = await selectedImage!.readAsBytes();
-                    imageUrl = 'data:image/jpeg;base64,${base64Encode(bytes)}';
+                if (titleController.text.isNotEmpty &&
+                    authorController.text.isNotEmpty) {
+                  try {
+                    await _firestore.collection('library_books').add({
+                      'title': titleController.text.trim(),
+                      'authorName': authorController.text.trim(),
+                      'description': descriptionController.text.trim(),
+                      'condition': selectedCondition,
+                      'category': selectedCategory,
+                      'ownerName': _currentUserName,
+                      'userId': _auth.currentUser?.uid,
+                      'imageUrl': imageBase64,
+                      'timestamp': FieldValue.serverTimestamp(),
+                    });
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Book added successfully!')),
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error adding book: $e')),
+                    );
                   }
-
-                  await _firestore.collection('library_books').add({
-                    'title': titleController.text.trim(),
-                    'authorName': authorController.text.trim(),
-                    'description': descriptionController.text.trim(),
-                    'condition': selectedCondition,
-                    'category': selectedCategory,
-                    'ownerName': _currentUserName,
-                    'userId': _auth.currentUser?.uid,
-                    'imageUrl': imageUrl,
-                    'timestamp': FieldValue.serverTimestamp(),
-                  });
-
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Book added successfully!')),
-                  );
                 }
               },
               child: Text('Add'),
@@ -314,8 +286,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
   }
 
   // Kitap düzenleme dialog'u
-  Future<void> _showEditBookDialog(BuildContext context, String bookId,
-      Map<String, dynamic> bookData) async {
+  Future<void> _showEditBookDialog(
+    BuildContext context,
+    String bookId,
+    Map<String, dynamic> bookData,
+  ) async {
     final titleController = TextEditingController(text: bookData['title']);
     final authorController =
         TextEditingController(text: bookData['authorName']);
@@ -323,42 +298,84 @@ class _LibraryScreenState extends State<LibraryScreen> {
         TextEditingController(text: bookData['description']);
     String selectedCondition = bookData['condition'] ?? _conditions[0];
     String selectedCategory = bookData['category'] ?? _categories[0];
+    selectedImage = null;
+    imageBase64 = bookData['imageUrl'];
 
     return showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Edit Book'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: titleController,
-                decoration: InputDecoration(
-                  labelText: 'Book Title',
-                  border: OutlineInputBorder(),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: Text('Edit Book'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () => _pickImage(setState),
+                  icon: Icon(Icons.photo_library),
+                  label: Text('Select Image'),
                 ),
-              ),
-              SizedBox(height: 16),
-              TextField(
-                controller: authorController,
-                decoration: InputDecoration(
-                  labelText: 'Author',
-                  border: OutlineInputBorder(),
+                if (selectedImage != null) ...[
+                  SizedBox(height: 10),
+                  Container(
+                    height: 150,
+                    width: 150,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Image.file(
+                      selectedImage!,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ] else if (imageBase64 != null) ...[
+                  SizedBox(height: 10),
+                  Container(
+                    height: 150,
+                    width: 150,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: imageBase64!.startsWith('data:image')
+                        ? Image.memory(
+                            base64Decode(imageBase64!.split(',')[1]),
+                            fit: BoxFit.cover,
+                          )
+                        : Image.network(
+                            imageBase64!,
+                            fit: BoxFit.cover,
+                          ),
+                  ),
+                ],
+                SizedBox(height: 16),
+                TextField(
+                  controller: titleController,
+                  decoration: InputDecoration(
+                    labelText: 'Book Title',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-              ),
-              SizedBox(height: 16),
-              TextField(
-                controller: descriptionController,
-                decoration: InputDecoration(
-                  labelText: 'Description',
-                  border: OutlineInputBorder(),
+                SizedBox(height: 16),
+                TextField(
+                  controller: authorController,
+                  decoration: InputDecoration(
+                    labelText: 'Author',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-                maxLines: 3,
-              ),
-              SizedBox(height: 16),
-              StatefulBuilder(
-                builder: (context, setState) => DropdownButtonFormField<String>(
+                SizedBox(height: 16),
+                TextField(
+                  controller: descriptionController,
+                  decoration: InputDecoration(
+                    labelText: 'Description',
+                    border: OutlineInputBorder(),
+                  ),
+                  maxLines: 3,
+                ),
+                SizedBox(height: 16),
+                DropdownButtonFormField<String>(
                   value: selectedCondition,
                   decoration: InputDecoration(
                     labelText: 'Condition',
@@ -376,10 +393,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     }
                   },
                 ),
-              ),
-              SizedBox(height: 16),
-              StatefulBuilder(
-                builder: (context, setState) => DropdownButtonFormField<String>(
+                SizedBox(height: 16),
+                DropdownButtonFormField<String>(
                   value: selectedCategory,
                   decoration: InputDecoration(
                     labelText: 'Category',
@@ -397,49 +412,47 @@ class _LibraryScreenState extends State<LibraryScreen> {
                     }
                   },
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              if (titleController.text.isNotEmpty &&
-                  authorController.text.isNotEmpty &&
-                  descriptionController.text.isNotEmpty) {
-                try {
-                  await _firestore
-                      .collection('library_books')
-                      .doc(bookId)
-                      .update({
-                    'title': titleController.text.trim(),
-                    'authorName': authorController.text.trim(),
-                    'description': descriptionController.text.trim(),
-                    'condition': selectedCondition,
-                    'category': selectedCategory,
-                  });
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Book updated successfully!')),
-                  );
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error updating book: $e')),
-                  );
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (titleController.text.isNotEmpty &&
+                    authorController.text.isNotEmpty) {
+                  try {
+                    await _firestore
+                        .collection('library_books')
+                        .doc(bookId)
+                        .update({
+                      'title': titleController.text.trim(),
+                      'authorName': authorController.text.trim(),
+                      'description': descriptionController.text.trim(),
+                      'condition': selectedCondition,
+                      'category': selectedCategory,
+                      'imageUrl': selectedImage != null
+                          ? imageBase64
+                          : bookData['imageUrl'],
+                    });
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Book updated successfully!')),
+                    );
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Error updating book: $e')),
+                    );
+                  }
                 }
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Please fill all required fields')),
-                );
-              }
-            },
-            child: Text('Save'),
-          ),
-        ],
+              },
+              child: Text('Save'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -545,10 +558,23 @@ class _LibraryScreenState extends State<LibraryScreen> {
                       Text('Category: ${bookData['category'] ?? 'Unknown'}'),
                     ],
                   ),
-                  trailing: IconButton(
-                    icon: Icon(Icons.delete, color: Colors.red),
-                    onPressed: () =>
-                        _showDeleteConfirmation(context, books[index].id),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.edit, color: Colors.blue),
+                        onPressed: () => _showEditBookDialog(
+                          context,
+                          books[index].id,
+                          bookData,
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.delete, color: Colors.red),
+                        onPressed: () =>
+                            _showDeleteConfirmation(context, books[index].id),
+                      ),
+                    ],
                   ),
                 ),
               );
