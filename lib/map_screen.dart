@@ -5,7 +5,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'widgets/user_avatar.dart';
-import 'profile_screen.dart';
 import 'user_profile_view.dart';
 
 class MapScreen extends StatefulWidget {
@@ -157,11 +156,34 @@ class _MapScreenState extends State<MapScreen> {
             },
           ),
           Positioned(
-            bottom: 16,
-            right: 16,
-            child: FloatingActionButton(
-              onPressed: _goToCurrentLocation,
-              child: Icon(Icons.my_location),
+            bottom: MediaQuery.of(context).size.height * 0.05,
+            right: MediaQuery.of(context).padding.right + 16,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Color(0xFF1E88E5), Color(0xFF1976D2)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Color(0xFF1E88E5).withOpacity(0.3),
+                    blurRadius: 8,
+                    spreadRadius: 1,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: FloatingActionButton(
+                onPressed: _goToCurrentLocation,
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                child: Icon(
+                  Icons.my_location,
+                  color: Colors.white,
+                ),
+              ),
             ),
           ),
           Positioned(

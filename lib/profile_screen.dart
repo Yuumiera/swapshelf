@@ -10,6 +10,8 @@ import 'firebase/auth_service.dart';
 import 'past_exchanges_screen.dart';
 import 'widgets/user_avatar.dart';
 import 'settings_screen.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ProfileScreen extends StatefulWidget {
   final String? userId;
@@ -24,6 +26,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn();
   bool _isUpdatingAge = false;
+  bool _isLoading = false;
 
   Stream<DocumentSnapshot> _getUserStream() {
     String uid = widget.userId ?? _auth.currentUser?.uid ?? '';
@@ -65,6 +68,94 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
     } catch (e) {
       print('Error during logout: ${e.toString()}');
+    }
+  }
+
+  Future<void> _pickAndUploadImage() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        throw Exception('Kullanıcı oturumu bulunamadı');
+      }
+
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 800,
+        maxHeight: 800,
+        imageQuality: 85,
+      );
+
+      if (image == null) return;
+
+      setState(() => _isLoading = true);
+
+      // Resim dosyasını oku
+      final bytes = await image.readAsBytes();
+      if (bytes.isEmpty) {
+        throw Exception('Resim dosyası boş');
+      }
+
+      try {
+        // Storage referansını oluştur ve klasörün varlığını kontrol et
+        final storageInstance = FirebaseStorage.instance;
+        final profileImagesRef = storageInstance.ref().child('profile_images');
+
+        // Resmi yükle
+        final String fileName =
+            'profile_${user.uid}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        final uploadTask = await profileImagesRef.child(fileName).putData(
+              bytes,
+              SettableMetadata(
+                contentType: 'image/jpeg',
+                customMetadata: {
+                  'userId': user.uid,
+                  'uploadTime': DateTime.now().toIso8601String(),
+                },
+              ),
+            );
+
+        if (uploadTask.state == TaskState.success) {
+          // URL al
+          final imageUrl = await uploadTask.ref.getDownloadURL();
+
+          // Firestore'u güncelle
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .update({
+            'profileImage': imageUrl,
+            'lastUpdated': FieldValue.serverTimestamp(),
+          });
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Profil fotoğrafı başarıyla güncellendi'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+        } else {
+          throw Exception('Resim yükleme başarısız oldu');
+        }
+      } catch (storageError) {
+        print('Storage error: $storageError');
+        throw Exception('Resim yüklenirken bir hata oluştu: $storageError');
+      }
+    } catch (e) {
+      print('Error uploading image: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                'Resim yüklenirken bir hata oluştu. Lütfen tekrar deneyin.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -139,8 +230,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           Stack(
                             children: [
                               Container(
+                                width: 120,
+                                height: 120,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
+                                  color: Color(0xFF1E88E5),
                                   boxShadow: [
                                     BoxShadow(
                                       color: Colors.black.withOpacity(0.25),
@@ -148,20 +242,50 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       spreadRadius: 3,
                                       offset: Offset(0, 5),
                                     ),
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.1),
-                                      blurRadius: 5,
-                                      spreadRadius: 1,
-                                      offset: Offset(0, 2),
-                                    ),
                                   ],
                                 ),
-                                child: UserAvatar(
-                                  userId:
-                                      widget.userId ?? _auth.currentUser!.uid,
-                                  size: 120,
+                                child: ClipOval(
+                                  child: userData['profileImage'] != null
+                                      ? Image.network(
+                                          userData['profileImage'],
+                                          width: 120,
+                                          height: 120,
+                                          fit: BoxFit.cover,
+                                        )
+                                      : Icon(
+                                          Icons.person,
+                                          size: 60,
+                                          color: Colors.white,
+                                        ),
                                 ),
                               ),
+                              if (isOwnProfile)
+                                Positioned(
+                                  bottom: 0,
+                                  right: 0,
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Color(0xFF1E88E5),
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.2),
+                                          blurRadius: 8,
+                                          spreadRadius: 1,
+                                          offset: Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: IconButton(
+                                      icon: Icon(Icons.camera_alt,
+                                          color: Colors.white, size: 20),
+                                      onPressed: _pickAndUploadImage,
+                                      constraints: BoxConstraints.tightFor(
+                                          width: 40, height: 40),
+                                      padding: EdgeInsets.zero,
+                                    ),
+                                  ),
+                                ),
                             ],
                           ),
                           SizedBox(height: 12),

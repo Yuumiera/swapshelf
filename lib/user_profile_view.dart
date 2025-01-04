@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'widgets/user_avatar.dart';
 import 'chat_screen.dart';
+import 'screens/edit_profile_screen.dart';
 
 class UserProfileView extends StatelessWidget {
   final String userId;
@@ -73,7 +74,18 @@ class UserProfileView extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isCurrentUser ? 'My Profile' : 'User Profile'),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          'My Profile',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -83,6 +95,21 @@ class UserProfileView extends StatelessWidget {
             ),
           ),
         ),
+        elevation: 0,
+        actions: [
+          if (userId == _auth.currentUser?.uid)
+            IconButton(
+              icon: Icon(Icons.edit, color: Colors.white),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => EditProfileScreen(),
+                  ),
+                );
+              },
+            ),
+        ],
       ),
       body: StreamBuilder<DocumentSnapshot>(
         stream: FirebaseFirestore.instance
