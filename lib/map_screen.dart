@@ -17,6 +17,7 @@ class _MapScreenState extends State<MapScreen> {
   final MapController _mapController = MapController();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -41,28 +42,44 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _getCurrentLocation() async {
+    setState(() => _isLoading = true);
     try {
-      Position position = await Geolocator.getCurrentPosition(
+      // Konum izni kontrolü
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          throw Exception('Konum izni reddedildi');
+        }
+      }
+
+      // Konum servisi açık mı kontrolü
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        throw Exception('Konum servisi kapalı');
+      }
+
+      final position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
+
       setState(() {
         _currentPosition = position;
         _mapController.move(
           LatLng(position.latitude, position.longitude),
-          13.0,
+          15.0,
         );
       });
-    } catch (e) {
-      print("Error getting location: $e");
-    }
-  }
 
-  void _goToCurrentLocation() {
-    if (_currentPosition != null) {
-      _mapController.move(
-        LatLng(_currentPosition!.latitude, _currentPosition!.longitude),
-        13.0,
+      // Konumu Firestore'a kaydet
+      await _updateUserLocation();
+    } catch (e) {
+      print('Konum alma hatası: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Konum alınamadı: $e')),
       );
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
@@ -107,6 +124,7 @@ class _MapScreenState extends State<MapScreen> {
                   ),
                   MarkerLayer(
                     markers: [
+                      // Mevcut kullanıcının konumu
                       if (_currentPosition != null && _auth.currentUser != null)
                         Marker(
                           point: LatLng(
@@ -118,12 +136,22 @@ class _MapScreenState extends State<MapScreen> {
                           builder: (context) => GestureDetector(
                             onTap: () =>
                                 _showUserProfile(_auth.currentUser!.uid),
-                            child: UserAvatar(
-                              userId: _auth.currentUser!.uid,
-                              size: 60,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.blue,
+                                  width: 2,
+                                ),
+                              ),
+                              child: UserAvatar(
+                                userId: _auth.currentUser!.uid,
+                                size: 60,
+                              ),
                             ),
                           ),
                         ),
+                      // Diğer kullanıcıların konumları
                       ...snapshot.data?.docs
                               .map((doc) {
                                 final data = doc.data() as Map<String, dynamic>;
@@ -156,46 +184,14 @@ class _MapScreenState extends State<MapScreen> {
             },
           ),
           Positioned(
-            bottom: MediaQuery.of(context).size.height * 0.05,
-            right: MediaQuery.of(context).padding.right + 16,
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF1E88E5), Color(0xFF1976D2)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: Color(0xFF1E88E5).withOpacity(0.3),
-                    blurRadius: 8,
-                    spreadRadius: 1,
-                    offset: Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: FloatingActionButton(
-                onPressed: _goToCurrentLocation,
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                child: Icon(
-                  Icons.my_location,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 0,
-            right: 0,
-            child: Container(
-              padding: EdgeInsets.all(4),
-              color: Colors.white.withOpacity(0.8),
-              child: Text(
-                '© OpenStreetMap contributors',
-                style: TextStyle(fontSize: 12),
-              ),
+            bottom: 16,
+            right: 16,
+            child: FloatingActionButton(
+              onPressed: _isLoading ? null : _getCurrentLocation,
+              child: _isLoading
+                  ? CircularProgressIndicator(color: Colors.white)
+                  : Icon(Icons.my_location),
+              backgroundColor: Colors.blue,
             ),
           ),
         ],
