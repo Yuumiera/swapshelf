@@ -11,10 +11,16 @@ class PastExchangesScreen extends StatelessWidget {
       return Scaffold(
         appBar: AppBar(
           leading: IconButton(
-            icon: Icon(Icons.arrow_back),
-            onPressed: () => Navigator.of(context).pop(),
+            icon: Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => Navigator.pop(context),
           ),
-          title: Text('Past Exchanges'),
+          title: Text(
+            'Past Exchanges',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
           flexibleSpace: Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -32,10 +38,16 @@ class PastExchangesScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
+          icon: Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
         ),
-        title: Text('Past Exchanges'),
+        title: Text(
+          'Past Exchanges',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
@@ -132,15 +144,6 @@ class PastExchangesScreen extends StatelessWidget {
                           ),
                         ],
                       ),
-                      if (status == 'accepted')
-                        ElevatedButton(
-                          onPressed: () =>
-                              _completeExchange(context, exchanges[index].id),
-                          child: Text('Mark as Completed'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green,
-                          ),
-                        ),
                     ],
                   ),
                 ),

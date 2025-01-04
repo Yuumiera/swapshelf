@@ -57,117 +57,169 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-        ),
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-      ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: _getChatsStream(),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            print('Stream error: ${snapshot.error}');
-            return Center(child: Text('Bir hata oluştu: ${snapshot.error}'));
-          }
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: StreamBuilder<QuerySnapshot>(
+                stream: _getChatsStream(),
+                builder: (context, snapshot) {
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Bir hata oluştu'));
+                  }
 
-          if (!snapshot.hasData || snapshot.data == null) {
-            return Center(child: CircularProgressIndicator());
-          }
+                  if (!snapshot.hasData || snapshot.data == null) {
+                    return Center(child: CircularProgressIndicator());
+                  }
 
-          final docs = snapshot.data!.docs;
-          if (docs.isEmpty) {
-            return Center(child: Text('Henüz mesajınız yok'));
-          }
-
-          Map<String, Map<String, dynamic>> uniqueChats = {};
-
-          for (var doc in docs) {
-            try {
-              final data = doc.data() as Map<String, dynamic>;
-              if (data['sender'] == null || data['recipient'] == null) continue;
-
-              final otherPerson = data['sender'] == _currentUserName
-                  ? data['recipient']
-                  : data['sender'];
-
-              if (!uniqueChats.containsKey(otherPerson) ||
-                  (data['timestamp'] != null &&
-                      (uniqueChats[otherPerson]!['timestamp'] == null ||
-                          (data['timestamp'] as Timestamp).compareTo(
-                                  uniqueChats[otherPerson]!['timestamp']) >
-                              0))) {
-                uniqueChats[otherPerson] = data;
-              }
-            } catch (e) {
-              print('Error processing chat: $e');
-              continue;
-            }
-          }
-
-          return ListView.builder(
-            itemCount: uniqueChats.length,
-            itemBuilder: (context, index) {
-              final otherPerson = uniqueChats.keys.elementAt(index);
-              final lastMessage = uniqueChats[otherPerson]!;
-
-              return Card(
-                margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 2,
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: Color(0xFF1E88E5),
-                    child: Text(
-                      otherPerson[0].toUpperCase(),
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  title: Text(
-                    otherPerson,
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Text(
-                    lastMessage['text'] ?? '',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: Colors.grey[600]),
-                  ),
-                  trailing: Text(
-                    _formatTimestamp(lastMessage['timestamp'] as Timestamp?),
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 12,
-                    ),
-                  ),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => MessageToPersonScreen(
-                          recipientName: otherPerson,
-                          currentUserName: _currentUserName!,
-                        ),
+                  final docs = snapshot.data!.docs;
+                  if (docs.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.message_outlined,
+                            size: 80,
+                            color: Colors.grey[400],
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            'Henüz mesajınız yok',
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
                       ),
                     );
-                  },
-                ),
-              );
-            },
-          );
-        },
+                  }
+
+                  Map<String, Map<String, dynamic>> uniqueChats = {};
+
+                  for (var doc in docs) {
+                    try {
+                      final data = doc.data() as Map<String, dynamic>;
+                      if (data['sender'] == null || data['recipient'] == null)
+                        continue;
+
+                      final otherPerson = data['sender'] == _currentUserName
+                          ? data['recipient']
+                          : data['sender'];
+
+                      if (!uniqueChats.containsKey(otherPerson) ||
+                          (data['timestamp'] != null &&
+                              (uniqueChats[otherPerson]!['timestamp'] == null ||
+                                  (data['timestamp'] as Timestamp).compareTo(
+                                          uniqueChats[otherPerson]![
+                                              'timestamp']) >
+                                      0))) {
+                        uniqueChats[otherPerson] = data;
+                      }
+                    } catch (e) {
+                      print('Error processing chat: $e');
+                      continue;
+                    }
+                  }
+
+                  return ListView.separated(
+                    padding: EdgeInsets.zero,
+                    itemCount: uniqueChats.length,
+                    separatorBuilder: (context, index) => Divider(
+                      height: 1,
+                      color: Colors.grey[200],
+                    ),
+                    itemBuilder: (context, index) {
+                      final otherPerson = uniqueChats.keys.elementAt(index);
+                      final lastMessage = uniqueChats[otherPerson]!;
+
+                      return InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => MessageToPersonScreen(
+                                recipientName: otherPerson,
+                                currentUserName: _currentUserName!,
+                              ),
+                            ),
+                          );
+                        },
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 28,
+                                backgroundColor: Color(0xFF1E88E5),
+                                child: Text(
+                                  otherPerson[0].toUpperCase(),
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text(
+                                          otherPerson,
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                        Text(
+                                          _formatTimestamp(
+                                              lastMessage['timestamp']
+                                                  as Timestamp?),
+                                          style: TextStyle(
+                                            color: Colors.grey[500],
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(height: 4),
+                                    Text(
+                                      lastMessage['text'] ?? '',
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

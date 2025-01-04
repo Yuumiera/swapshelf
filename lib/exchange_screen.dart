@@ -18,11 +18,46 @@ class ExchangeScreen extends StatelessWidget {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          bottom: TabBar(
-            tabs: [
-              Tab(text: 'My Requests'),
-              Tab(text: 'Incoming Requests'),
-            ],
+          toolbarHeight: 0,
+          bottom: PreferredSize(
+            preferredSize: Size.fromHeight(40),
+            child: TabBar(
+              isScrollable: false,
+              tabs: [
+                Tab(
+                  height: 35,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      'My Requests',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ),
+                Tab(
+                  height: 35,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      'Incoming Requests',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+              indicatorColor: Colors.white,
+              unselectedLabelColor: Colors.white.withOpacity(0.7),
+              labelPadding: EdgeInsets.zero,
+              indicatorWeight: 2,
+            ),
           ),
           flexibleSpace: Container(
             decoration: BoxDecoration(
