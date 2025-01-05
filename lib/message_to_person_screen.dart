@@ -196,20 +196,22 @@ class _MessageToPersonScreenState extends State<MessageToPersonScreen> {
     );
   }
 
-  void _sendMessage() {
+  void _sendMessage() async {
     if (_messageController.text.trim().isNotEmpty) {
+      final messageText = _messageController.text.trim();
+      _messageController.clear(); // Hemen temizle
+
       try {
-        _firestore.collection('messages').add({
-          'text': _messageController.text.trim(),
+        await _firestore.collection('messages').add({
+          'text': messageText,
           'sender': widget.currentUserName,
           'recipient': widget.recipientName,
           'timestamp': FieldValue.serverTimestamp(),
         });
-        _messageController.clear();
       } catch (e) {
         print('Error sending message: $e');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to send message')),
+          SnackBar(content: Text('Mesaj gönderilemedi')),
         );
       }
     }

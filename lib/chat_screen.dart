@@ -36,18 +36,6 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Messages'),
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.red, Colors.blue],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
-      ),
       body: StreamBuilder<QuerySnapshot>(
         stream: _firestore
             .collection('messages')
@@ -76,14 +64,24 @@ class _ChatScreenState extends State<ChatScreen> {
               final otherUser = sender == _currentUserName ? recipient : sender;
 
               // En son mesajı sakla
-              if (!uniqueChats.containsKey(otherUser) ||
-                  (uniqueChats[otherUser]!['timestamp'] as Timestamp)
-                          .compareTo(data['timestamp'] as Timestamp) <
-                      0) {
+              if (!uniqueChats.containsKey(otherUser)) {
                 uniqueChats[otherUser] = {
                   ...data,
                   'otherUser': otherUser,
                 };
+              } else {
+                final existingTimestamp =
+                    uniqueChats[otherUser]!['timestamp'] as Timestamp?;
+                final newTimestamp = data['timestamp'] as Timestamp?;
+
+                if (existingTimestamp == null ||
+                    (newTimestamp != null &&
+                        newTimestamp.compareTo(existingTimestamp) > 0)) {
+                  uniqueChats[otherUser] = {
+                    ...data,
+                    'otherUser': otherUser,
+                  };
+                }
               }
             }
           }
