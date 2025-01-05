@@ -356,21 +356,54 @@ class ExchangeScreen extends StatelessWidget {
   Future<void> _updateExchangeStatus(
       BuildContext context, String requestId, String newStatus) async {
     try {
-      await _firestore.collection('exchanges').doc(requestId).update({
-        'status': newStatus,
-      });
+      // Önce seçilen request'in kitap bilgilerini alalım
+      final selectedRequest =
+          await _firestore.collection('exchanges').doc(requestId).get();
+      final selectedRequestData =
+          selectedRequest.data() as Map<String, dynamic>;
 
-      String message = newStatus == 'accepted'
-          ? 'Exchange request accepted'
-          : 'Exchange request rejected';
+      if (newStatus == 'accepted') {
+        // Batch işlemi başlat
+        WriteBatch batch = _firestore.batch();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
+        // Seçilen request'i kabul et
+        batch.update(_firestore.collection('exchanges').doc(requestId), {
+          'status': newStatus,
+        });
+
+        // Aynı kitap için olan diğer bekleyen requestleri bul ve reddet
+        final otherRequests = await _firestore
+            .collection('exchanges')
+            .where('bookId', isEqualTo: selectedRequestData['bookId'])
+            .where('status', isEqualTo: 'pending')
+            .where(FieldPath.documentId, isNotEqualTo: requestId)
+            .get();
+
+        // Diğer requestleri reddet
+        for (var doc in otherRequests.docs) {
+          batch.update(doc.reference, {'status': 'rejected'});
+        }
+
+        // Tüm değişiklikleri uygula
+        await batch.commit();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Takas talebi kabul edildi')),
+        );
+      } else {
+        // Sadece reddetme durumu
+        await _firestore.collection('exchanges').doc(requestId).update({
+          'status': newStatus,
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Takas talebi reddedildi')),
+        );
+      }
     } catch (e) {
       print('Error updating exchange status: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to update exchange status')),
+        SnackBar(content: Text('Takas durumu güncellenirken bir hata oluştu')),
       );
     }
   }
