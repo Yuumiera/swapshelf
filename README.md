@@ -12,7 +12,8 @@ Search and Filtering: Easily find items based on categories, keywords, or user p
 
 Request Management: Send and manage swap requests between users.
 
-Notifications: Stay updated on swap requests, approvals, and messages.
+Map-Based User Interaction: Users can view other users on a map, click on their profiles, and explore their listed items.
+
 
 Community Focused: Build connections and trust within the SwapShelf community.
 
