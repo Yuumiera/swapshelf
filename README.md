@@ -29,7 +29,7 @@ Installation
 
 Clone the repository:
 
-git clone https://github.com/ranayalcnn/swapshelf.git
+git clone https://github.com/yuumiera/swapshelf.git
 cd swapshelf
 
 Install dependencies:
@@ -46,11 +46,9 @@ Technologies Used
 
 Frontend & Backend: Flutter (Dart)
 
-State Management: Provider or any other state management solution (depending on implementation)
+Database: Firebase 
 
-Database: Firebase or a local database (depending on implementation)
-
-Authentication: Firebase Authentication or custom authentication (depending on implementation)
+Authentication: Firebase Authentication 
 
 Contributing
 
@@ -72,9 +70,7 @@ git push origin feature/your-feature-name
 
 Open a pull request.
 
-License
 
-This project is licensed under the MIT License.
 
 Contact
 
