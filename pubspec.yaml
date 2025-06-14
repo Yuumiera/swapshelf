@@ -10,17 +10,17 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  firebase_core: ^3.8.0
-  firebase_auth: ^5.3.3
-  cloud_firestore: ^5.5.0
-  google_sign_in: ^5.4.0
+  firebase_core: ^2.24.2
+  firebase_auth: ^4.15.3
+  cloud_firestore: ^4.13.6
+  google_sign_in: ^6.1.6
   cupertino_icons: ^1.0.8
   flutter_map: ^4.0.0
   latlong2: ^0.8.0
   geolocator: ^9.0.2
   google_fonts: ^4.0.4
   image_picker: ^1.0.7
-  firebase_storage: ^12.3.7
+  firebase_storage: ^11.5.6
   permission_handler: ^10.4.5
   app_settings: ^5.1.1
   device_info_plus: ^9.1.0
@@ -30,8 +30,9 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^2.0.0
-  firebase_auth_mocks: ^0.14.1
-  mockito: ^5.0.0
+  firebase_auth_mocks: ^0.13.0
+  mockito: ^5.4.4
+  build_runner: ^2.4.8
 
 flutter:
   uses-material-design: true
@@ -39,3 +40,5 @@ flutter:
   # Assets'lerinizin yolunu doğru tanımladığınızdan emin olun.
   assets:
     - assets/img/
+    - assets/images/
+    - assets/icons/
