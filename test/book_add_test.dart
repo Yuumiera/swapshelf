@@ -66,5 +66,88 @@ void main() {
       expect(book.ownerName, equals('Unknown Owner'));
       expect(book.userId, equals('test-user-id'));
     });
+
+    // New mock tests
+    test('Book model handles empty strings', () {
+      final book = Book(
+        id: 'test-id',
+        title: '',
+        authorName: '',
+        description: '',
+        condition: '',
+        category: '',
+        ownerName: '',
+        userId: 'test-user-id',
+      );
+
+      expect(book.title, isEmpty);
+      expect(book.authorName, isEmpty);
+      expect(book.description, isEmpty);
+      expect(book.condition, isEmpty);
+      expect(book.category, isEmpty);
+      expect(book.ownerName, isEmpty);
+    });
+
+    test('Book model handles special characters', () {
+      final specialChars = 'Test Book!@#\$%^&*()';
+      final book = Book(
+        id: 'test-id',
+        title: specialChars,
+        authorName: specialChars,
+        description: specialChars,
+        condition: specialChars,
+        category: specialChars,
+        ownerName: specialChars,
+        userId: 'test-user-id',
+      );
+
+      expect(book.title, equals(specialChars));
+      expect(book.authorName, equals(specialChars));
+      expect(book.description, equals(specialChars));
+      expect(book.condition, equals(specialChars));
+      expect(book.category, equals(specialChars));
+      expect(book.ownerName, equals(specialChars));
+    });
+
+    test('Book model handles long text', () {
+      final longText = 'a' * 1000;
+      final book = Book(
+        id: 'test-id',
+        title: longText,
+        authorName: longText,
+        description: longText,
+        condition: longText,
+        category: longText,
+        ownerName: longText,
+        userId: 'test-user-id',
+      );
+
+      expect(book.title, equals(longText));
+      expect(book.authorName, equals(longText));
+      expect(book.description, equals(longText));
+      expect(book.condition, equals(longText));
+      expect(book.category, equals(longText));
+      expect(book.ownerName, equals(longText));
+    });
+
+    test('Book model handles null values in JSON', () {
+      final json = {
+        'title': null,
+        'authorName': null,
+        'description': null,
+        'condition': null,
+        'category': null,
+        'ownerName': null,
+        'userId': 'test-user-id',
+      };
+
+      final book = Book.fromJson(json, id: 'test-id');
+      expect(book.title, equals('Unknown Book'));
+      expect(book.authorName, equals('Unknown Author'));
+      expect(book.description, equals('No description'));
+      expect(book.condition, equals('Unknown'));
+      expect(book.category, equals('Other'));
+      expect(book.ownerName, equals('Unknown Owner'));
+    });
   });
 } 
